@@ -1,8 +1,9 @@
 clc;clear all;close all;
 
-FOV=10;
-azi_step=1;
-ele_step=0;
+AZFOV=360;
+ELFOV = 60;
+azi_step=3;
+ele_step=3;
 
 % start_freq = 4.072e9% - halfspan;   
 % stop_freq = 4.317e9;% + halfspan; %Calculate frequency span
@@ -21,13 +22,13 @@ evb= serialport('COM5', 115200);
 evb.Timeout = 1;
 
 
-RotatorControl_v4(0, 0, -FOV/2);      % 0, el_move, az_move
-aziele_cur = [-FOV/2 0];
+RotatorControl_v4(0, 0, -AZFOV/2);      % 0, el_move, az_move
+aziele_cur = [-AZFOV/2 0];
 
 % write(evb, "s", "char");
 
 tic
-for ind_ang=1:(FOV+1)
+for ind_ang=1:(AZFOV+1)
         ind_ang
            
 
@@ -50,7 +51,7 @@ for ind_ang=1:(FOV+1)
 end
 toc
 
-RotatorControl_v4(0, 0, -FOV/2-azi_step);
+RotatorControl_v4(0, 0, -AZFOV/2-azi_step);
 
 clear evb;
 close all;

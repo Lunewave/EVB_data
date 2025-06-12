@@ -2,7 +2,7 @@ close all; clear all; clc;
 
 AZ_start = -180; AZ_end = 180; AZ_step = 1;
 EL_start = 0; EL_end = 0; EL_step = 1;
-save_figs = 0;
+save_figs = 1;
 frequency = 2456; %MHz
 lib_location = 'Marana Location 1';
 test_location = 'Marana Location 2';
@@ -62,7 +62,7 @@ for antenna_ind=1:6
         grid on;hold on;
         plot(AZ_data,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -92,11 +92,11 @@ for antenna_ind=1:6
             'FontSize', 10);
         
         subplot(1,2,2)
-        plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,fre_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
         grid on;hold on;
-        plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,fre_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase AZ = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -425,8 +425,8 @@ end
 
 %% Save Figures
 if save_figs
-    folderName = [num2str(frequency(fre_ind)),'_MHz'];
-    newFolderPath = fullfile(Datadir, folderName);
+    folderName = [num2str(frequency),'_MHz'];
+    newFolderPath = fullfile(testpath, folderName);
     
     if ~exist(newFolderPath, 'dir')
         mkdir(newFolderPath);

@@ -2,7 +2,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
 % Load_FALCON_EVB_Data loads and processes binary EVB data into magnitude, phase, and complex values.
 %
 % Inputs:
-%   path   - Folder path to .BIN files, ending in '/' or '\'
+%   path   - Folder path to .BIN files
 %   numAZ  - Number of azimuth steps
 %   numEL  - Number of elevation steps
 %
