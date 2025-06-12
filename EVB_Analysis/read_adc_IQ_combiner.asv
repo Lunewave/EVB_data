@@ -1,9 +1,9 @@
 clear all;close all;clc;
-FOV = 10;
-path = 'U:\Falcon_Project\20250611_MaranaTest_+-5deg_nolens_AZ_only_withEVB_noise\'; %keep trailing backslash
+FOV = 360;
+path = 'U:\Falcon_Project\20250610_LW_OfficeTest_+-180deg_noLens_2.45GHz\'; %keep trailing backslash
 
-start_angle = -5;
-end_angle = 5;
+start_angle = -180;
+end_angle = 180;
 
 
 
@@ -31,15 +31,15 @@ C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:);
 C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
 
-figure(1)
-% plot(C_all(:,3));
-plot(real(C1_cmplex(:,3)));hold on;
-% plot(real(C1_cmplex(:,4)));
+% figure(1)
+% % plot(C_all(:,3));
+% plot(real(C1_cmplex(:,3)));hold on;
+% % plot(real(C1_cmplex(:,4)));
 
-plot(C1(:,5));
-plot(C1(:,6));
-plot(real(C1_cmplex(:,7)));
-plot(real(C1_cmplex(:,8)));
+% plot(C1(:,5));
+% plot(C1(:,6));
+% plot(real(C1_cmplex(:,7)));
+% plot(real(C1_cmplex(:,8)));
 hold on;
 xlabel('Sample index');
 ylabel('ADC output')
@@ -105,36 +105,36 @@ phase_8(frame_ind)=angle(freE(I)/freH(I))/pi*180;
 end
 
 %Y
-P_diff1=(mod(phase_1+180,360)-180).';
-P_diff2=(mod(phase_2+180,360)-180).';
-P_diff3=(mod(phase_3+180,360)-180).';
-P_diff4=(mod(phase_4+180,360)-180).';
+P_diff1=(mode(phase_1+180,360)-180).';
+P_diff2=(mode(phase_2+180,360)-180).';
+P_diff3=(mode(phase_3+180,360)-180).';
+P_diff4=(mode(phase_4+180,360)-180).';
 
-P_diff5=(mod(phase_5+180,360)-180).';
-P_diff6=(mod(phase_6+180,360)-180).';
-P_diff7=(mod(phase_7+180,360)-180).';
-P_diff8=(mod(phase_8+180,360)-180).';
+P_diff5=(mode(phase_5+180,360)-180).';
+P_diff6=(mode(phase_6+180,360)-180).';
+P_diff7=(mode(phase_7+180,360)-180).';
+P_diff8=(mode(phase_8+180,360)-180).';
 
 phase_diff_all(:,ang_ind+1+FOV/2)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6) median(P_diff7) median(P_diff8)];
 
-figure(3)
-plot([1:512]+(ang_ind+FOV/2)*512,P_diff1,'-o');hold on;grid on;
-plot([1:512]+(ang_ind+FOV/2)*512,P_diff2,'-o');
-plot([1:512]+(ang_ind+FOV/2)*512,P_diff4,'-o');
-% plot(P_diff7,'-o');
-% plot(P_diff8,'-o');
-xlabel('Frame number')
-ylabel('Phase difference (deg)')
+% figure(3)
+% plot([1:512]+(ang_ind+FOV/2)*512,P_diff1,'-o');hold on;grid on;
+% plot([1:512]+(ang_ind+FOV/2)*512,P_diff2,'-o');
+% plot([1:512]+(ang_ind+FOV/2)*512,P_diff4,'-o');
+% % plot(P_diff7,'-o');
+% % plot(P_diff8,'-o');
+% xlabel('Frame number')
+% ylabel('Phase difference (deg)')
 
 end
 
 figure(4)
-plot(start_angle:end_angle,unwrap(phase_diff_all(1,FOV/2+1+(start_angle:end_angle))),'-o');hold on;grid on;
-plot(start_angle:end_angle,unwrap(phase_diff_all(2,FOV/2+1+(start_angle:end_angle))),'-o');
-plot(start_angle:end_angle,unwrap(phase_diff_all(3,FOV/2+1+(start_angle:end_angle))),'-o');
-plot(start_angle:end_angle,unwrap(phase_diff_all(4,FOV/2+1+(start_angle:end_angle))),'-o');
-plot(start_angle:end_angle,unwrap(phase_diff_all(5,FOV/2+1+(start_angle:end_angle))),'-o');
-plot(start_angle:end_angle,unwrap(phase_diff_all(6,FOV/2+1+(start_angle:end_angle))),'-o');
+plot(start_angle:end_angle,phase_diff_all(1,FOV/2+1+(start_angle:end_angle)),'-o');hold on;grid on;
+plot(start_angle:end_angle,phase_diff_all(2,FOV/2+1+(start_angle:end_angle)),'-o');
+plot(start_angle:end_angle,phase_diff_all(3,FOV/2+1+(start_angle:end_angle)),'-o');
+plot(start_angle:end_angle,phase_diff_all(4,FOV/2+1+(start_angle:end_angle)),'-o');
+plot(start_angle:end_angle,phase_diff_all(5,FOV/2+1+(start_angle:end_angle)),'-o');
+plot(start_angle:end_angle,phase_diff_all(6,FOV/2+1+(start_angle:end_angle)),'-o');
 xlabel('Angle (deg)')
 ylabel('Phase difference (deg)')
 legend('Phase diff 1','Phase diff 2','Phase diff 3','Phase diff 4','Phase diff 5','Between tile')
