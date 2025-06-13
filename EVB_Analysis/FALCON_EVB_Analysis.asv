@@ -2,7 +2,7 @@ close all; clear all; clc;
 
 AZ_start = -180; AZ_end = 180; AZ_step = 1;
 EL_start = 0; EL_end = 0; EL_step = 1;
-save_figs = 0;
+save_figs = 1;
 frequency = 2456; %MHz
 lib_location = 'Marana Location 1';
 test_location = 'Marana Location 2';
@@ -62,7 +62,7 @@ for antenna_ind=1:6
         grid on;hold on;
         plot(AZ_data,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -92,11 +92,11 @@ for antenna_ind=1:6
             'FontSize', 10);
         
         subplot(1,2,2)
-        plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,fre_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
         grid on;hold on;
-        plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,fre_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase AZ = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -112,7 +112,7 @@ length_az=length(AZ_table);
 for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      % object AZ angle input   [-140:140]
     for obj_el_input= EL_start:EL_step:EL_end    %-6:2:6;                        % object EL angle input   [-6:6]
 
-        obj_az=obj_az_input
+        obj_az=-129+1+1%obj_az_input
         obj_el=obj_el_input
         %Test vector
         test=squeeze(Test_Complex(:,obj_az/AZ_step+(length(AZ_data)+1)/2,EL_steps-(obj_el)/abs(EL_step))); 
@@ -292,7 +292,7 @@ figure(11)
 subplot(1, 2, 1)
 if AZ_steps>1
     imagesc(AZ_data,EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-20 20]);
+    caxis([-3 3]);
     colorbar;
     xlabel('AZ');ylabel('EL');
 else
@@ -303,7 +303,7 @@ else
     ylim(yl_extended)
     xlabel('EL');ylabel('Error (deg)');
 end
-title(['EL error at ' num2str(frequency(fre_ind))  ' MHz']);
+title(['EL error at ' num2str(frequency)  ' MHz']);
 err_text = sprintf(['Average Elevation Error: %.3f degrees\n' ...
                     'Average Elevation Error SD: %.3f degrees\n' ...
                     'Max Elevation Error: %.3f degrees'], EL_err_ave, EL_err_std, EL_err_max);
@@ -316,7 +316,7 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
 subplot(1, 2, 2)
 if AZ_steps>1
     imagesc(AZ_data,EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-20 20]);
+    caxis([-3 3]);
     colorbar;
     xlabel('AZ');ylabel('EL');
 else
@@ -325,7 +325,7 @@ else
     ylim(yl_extended)
     xlabel('EL');ylabel('Error (deg)');
 end
-title(['Interpolated EL error at ' num2str(frequency(fre_ind))  ' MHz']);
+title(['Interpolated EL error at ' num2str(frequency)  ' MHz']);
 err_text = sprintf(['Average Interpolated Elevation Error: %.3f degrees\n' ...
                     'Average Interpolated Elevation Error SD: %.3f degrees\n' ...
                     'Max Interpolated Elevation Error: %.3f degrees'], EL_err_ave_ITP, EL_err_std_ITP, EL_err_max_ITP);
@@ -425,8 +425,8 @@ end
 
 %% Save Figures
 if save_figs
-    folderName = [num2str(frequency(fre_ind)),'_MHz'];
-    newFolderPath = fullfile(Datadir, folderName);
+    folderName = [num2str(frequency),'_MHz'];
+    newFolderPath = fullfile(testpath, folderName);
     
     if ~exist(newFolderPath, 'dir')
         mkdir(newFolderPath);

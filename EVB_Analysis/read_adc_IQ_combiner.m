@@ -142,13 +142,27 @@ legend('Phase diff 1','Phase diff 2','Phase diff 3','Phase diff 4','Phase diff 5
 % t=[0:1023];
 % C=cos(512*t/1024*2*pi);
 % 
-figure(2)
-hold on;grid on;
+% figure(2)
+% hold on;grid on;
 % plot(fre/1e9,mag2db(abs(freB)));
-plot(fre/1e9,mag2db(abs(freC)));
-plot(fre/1e9,mag2db(abs(freD)));
-plot(fre/1e9,mag2db(abs(freG)));
+% plot(fre/1e9,mag2db(abs(freC)));
+% plot(fre/1e9,mag2db(abs(freD)));
+% plot(fre/1e9,mag2db(abs(freG)));
 % plot(fre/1e9,mag2db(abs(freF)));
 % plot(fre/1e9,mag2db(abs(freG)));
 % plot(fre/1e9,mag2db(abs(freH)));
-xlabel('Frequeny (GHz)')
+% xlabel('Frequeny (GHz)')
+% ylabel('Magnitude (dB)')
+
+n = length(fre);
+figure(2)
+hold on; grid on;
+plot(fre/1e9+2.277, [mag2db(abs(freB(n/2+1:end))); mag2db(abs(freB(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freC(n/2+1:end))); mag2db(abs(freC(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freD(n/2+1:end))); mag2db(abs(freD(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freF(n/2+1:end))); mag2db(abs(freF(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freH(n/2+1:end))); mag2db(abs(freH(1:n/2)))]);
+xlabel('Frequency (GHz)')
+ylabel('Magnitude (dB)')
