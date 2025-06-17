@@ -25,7 +25,7 @@ function RotatorControl_v4(Hdegree,Vdegree,Rdegree)
 %% Try TM toolbox
 % In Command Window: tmtool
 %% COM number
-COMNum = 'COM4';
+COMNum = 'COM5';
 %% In order to avoid damage the Rotator, the vertical rotation degrees are limited to be
 VdegreeLimit = [-30 30];
 if Vdegree<VdegreeLimit(1)
