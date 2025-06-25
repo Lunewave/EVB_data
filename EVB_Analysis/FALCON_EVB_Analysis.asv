@@ -19,16 +19,32 @@ shifts12 = [0 0 0 0 0 0];
 
 libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
 testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-%%%%%%%%%%%FIXED PARAMETERS%%%%%%%%%%%%
+
+%%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
-EL_data  = EL_start:EL_step:EL_end;
+EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
 numpeaks2check = 4; %# of peaks to check in each dimension of angle interpolation
-%%%%%%%%%%%%%LIBRARY%%%%%%%%%%%%%%%%%%%
-[Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
-%%%%%%%%%%%%%TEST%%%%%%%%%%%%%%%%%%%%%%
-[Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
+%%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+lib_cache = fullfile(libpath, 'cached_library_data.mat');
+
+if isfile(lib_cache)
+    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+else
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
+    save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+end
+%%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
+test_cache = fullfile(testpath, 'cached_test_data.mat');
+
+if isfile(test_cache)
+    load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
+else
+    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
+    save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
+end
+
 
 
 
@@ -112,7 +128,7 @@ length_az=length(AZ_table);
 for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      % object AZ angle input   [-140:140]
     for obj_el_input= EL_start:EL_step:EL_end    %-6:2:6;                        % object EL angle input   [-6:6]
 
-        obj_az=-129+1+1%obj_az_input
+        obj_az=obj_az_input
         obj_el=obj_el_input
         %Test vector
         test=squeeze(Test_Complex(:,obj_az/AZ_step+(length(AZ_data)+1)/2,EL_steps-(obj_el)/abs(EL_step))); 
