@@ -1,9 +1,10 @@
 clear all;close all;clc;
-FOV = 10;
-path = 'U:\Falcon_Project\20250611_MaranaTest_+-5deg_nolens_AZ_only_withEVB_noise\'; %keep trailing backslash
+FOV = 6;
+path = 'D:\DATA\'; %keep trailing backslash
 
-start_angle = -5;
-end_angle = 5;
+start_angle = -3;
+end_angle = 3;
+step = 3;
 
 
 
@@ -11,8 +12,8 @@ end_angle = 5;
 phase_diff_all = zeros(8, FOV+1);
 
 
-for ang_ind=start_angle:end_angle
-fileID = fopen([path num2str(ang_ind+FOV/2,'%04d') '.BIN'], 'r', 'ieee-le');
+for ang_ind=start_angle:step:end_angle
+fileID = fopen([path num2str((ang_ind+FOV/2)/step,'%04d') '.BIN'], 'r', 'ieee-le');
 ang_ind
 
 
@@ -160,9 +161,9 @@ hold on; grid on;
 plot(fre/1e9+2.277, [mag2db(abs(freB(n/2+1:end))); mag2db(abs(freB(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freC(n/2+1:end))); mag2db(abs(freC(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freD(n/2+1:end))); mag2db(abs(freD(1:n/2)))]);
-plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freE(n/2+1:end))); mag2db(abs(freE(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freF(n/2+1:end))); mag2db(abs(freF(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
-plot(fre/1e9+2.277, [mag2db(abs(freH(n/2+1:end))); mag2db(abs(freH(1:n/2)))]);
+% plot(fre/1e9+2.277, [mag2db(abs(freH(n/2+1:end))); mag2db(abs(freH(1:n/2)))]);
 xlabel('Frequency (GHz)')
 ylabel('Magnitude (dB)')

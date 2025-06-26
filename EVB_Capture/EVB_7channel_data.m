@@ -3,8 +3,8 @@ clc;clear all;close all;
 
 azi_step=3;
 ele_step=3;
-AZFOV=12;
-ELFOV = 0;
+AZFOV=360;
+ELFOV = 66;
 NeleRotation = ELFOV/ele_step+1;
 Nazirotation = AZFOV/azi_step+1;
 

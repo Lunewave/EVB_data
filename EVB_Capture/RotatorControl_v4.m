@@ -27,15 +27,15 @@ function RotatorControl_v4(Hdegree,Vdegree,Rdegree)
 %% COM number
 COMNum = 'COM5';
 %% In order to avoid damage the Rotator, the vertical rotation degrees are limited to be
-VdegreeLimit = [-30 30];
-if Vdegree<VdegreeLimit(1)
-    Vdegree=VdegreeLimit(1);
-    disp(['Vertical degree should be more than ',num2str(VdegreeLimit(1))]);
-end
-if Vdegree>VdegreeLimit(2)
-    Vdegree=VdegreeLimit(2);
-    disp(['Vertical degree should be less than ',num2str(VdegreeLimit(2))]);
-end
+% VdegreeLimit = [-30 30];
+% if Vdegree<VdegreeLimit(1)
+%     Vdegree=VdegreeLimit(1);
+%     disp(['Vertical degree should be more than ',num2str(VdegreeLimit(1))]);
+% end
+% if Vdegree>VdegreeLimit(2)
+%     Vdegree=VdegreeLimit(2);
+%     disp(['Vertical degree should be less than ',num2str(VdegreeLimit(2))]);
+% end
 
 % RdegreeLimit = [-12 12];
 % if Rdegree<RdegreeLimit(1)
