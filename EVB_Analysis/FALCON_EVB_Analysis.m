@@ -2,7 +2,7 @@ close all; clear all; clc;
 
 AZ_start = -180; AZ_end = 180; AZ_step = 1;
 EL_start = 0; EL_end = 0; EL_step = 1;
-save_figs = 1;
+save_figs = 0;
 frequency = 2456; %MHz
 lib_location = 'Marana Location 1';
 test_location = 'Marana Location 2';
@@ -19,17 +19,28 @@ shifts12 = [0 0 0 0 0 0];
 
 libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
 testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-%%%%%%%%%%%FIXED PARAMETERS%%%%%%%%%%%%
+%%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
-EL_data  = EL_start:EL_step:EL_end;
+EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
 numpeaks2check = 4; %# of peaks to check in each dimension of angle interpolation
-%%%%%%%%%%%%%LIBRARY%%%%%%%%%%%%%%%%%%%
-[Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
-%%%%%%%%%%%%%TEST%%%%%%%%%%%%%%%%%%%%%%
-[Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
-
+%%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+lib_cache = fullfile(libpath, 'cached_library_data.mat');
+if isfile(lib_cache)
+    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+else
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
+    save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+end
+%%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
+test_cache = fullfile(testpath, 'cached_test_data.mat');
+if isfile(test_cache)
+    load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
+else
+    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
+    save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
+end
 
 
 %% Plot Antenna Patterns
