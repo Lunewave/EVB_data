@@ -4,7 +4,7 @@ clc;clear all;close all;
 azi_step=3;
 ele_step=3;
 AZFOV=360;
-ELFOV = 60;
+ELFOV = 66;
 NeleRotation = ELFOV/ele_step+1;
 Nazirotation = AZFOV/azi_step+1;
 
@@ -13,7 +13,7 @@ ele_init = -ELFOV;
 
 
 % Setup Control from Host PC to EVB
-evb= serialport('COM5', 115200);
+evb= serialport('COM10', 115200);
 evb.Timeout = 1;
 
 
@@ -30,12 +30,12 @@ iazi_start = 1;
 tic
 for iele = iele_start:NeleRotation
     if iele==iele_start
-        ttt_iazi=iaza_start;
+        ttt_iazi=iazi_start;
     else
         ttt_iazi=1;
     end
 
-    for iazi=ttt_iaza:Nazirotation
+    for iazi=ttt_iazi:Nazirotation
         aziele_cur
         disp(['AZ ' num2str(iazi), '/', num2str(Nazirotation) '    EL ' num2str(iele), '/', num2str(NeleRotation)]);
 
