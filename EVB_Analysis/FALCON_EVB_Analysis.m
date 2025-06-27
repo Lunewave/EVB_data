@@ -1,11 +1,11 @@
 close all; clear all; clc;
 
-AZ_start = -180; AZ_end = 180; AZ_step = 1;
-EL_start = 0; EL_end = 0; EL_step = 1;
+AZ_start = -180; AZ_end = 180; AZ_step = 3;
+EL_start = 66; EL_end = 0; EL_step = -3;
 save_figs = 0;
 frequency = 2456; %MHz
-lib_location = 'Marana Location 1';
-test_location = 'Marana Location 2';
+lib_location = 'Marana Calibration Library';
+test_location = 'Marana Test';
 
 noise_level_cal = 45;
 noise_level_test = 45;
@@ -17,8 +17,8 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -245,13 +245,15 @@ EL_err_max_ITP=max(abs(tmp(:)));
 
 % ['AZ error average=' num2str(AZ_err_ave) ' deg;   AZ error std=' num2str(AZ_err_std) ' deg;']
 % ['EL error average=' num2str(EL_err_ave) ' deg;   EL error std=' num2str(EL_err_std) ' deg;']
+step_error = 4;
 
 figure(10)
 subplot(1, 2, 1)
 if EL_steps>1
     imagesc(AZ_data,EL_data,AZ_err(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-20 20]);
-    colorbar;
+    caxis(AZ_step * [-step_error, step_error]);
+    cb = colorbar;
+    set(cb, 'Ticks', (-step_error * AZ_step) : AZ_step : (step_error * AZ_step));
     xlabel('AZ');ylabel('EL');
 
 else
@@ -275,8 +277,9 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
 subplot(1, 2, 2)
 if EL_steps>1
     imagesc(AZ_data,EL_data,AZ_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-20 20]);
-    colorbar;
+    caxis(AZ_step * [-step_error, step_error]);
+    cb = colorbar;
+    set(cb, 'Ticks', (-step_error * AZ_step) : AZ_step : (step_error * AZ_step));
     xlabel('AZ');ylabel('EL');
 
 else
@@ -303,8 +306,9 @@ figure(11)
 subplot(1, 2, 1)
 if AZ_steps>1
     imagesc(AZ_data,EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-3 3]);
-    colorbar;
+    caxis(-EL_step * [-step_error, step_error]);
+    cb = colorbar;
+    set(cb, 'Ticks', (step_error * EL_step) : -EL_step : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
     plot(EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
@@ -327,8 +331,9 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
 subplot(1, 2, 2)
 if AZ_steps>1
     imagesc(AZ_data,EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis([-3 3]);
-    colorbar;
+    caxis(-EL_step * [-step_error, step_error]);
+    cb = colorbar;
+    set(cb, 'Ticks', (step_error * EL_step) : -EL_step : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
     plot(EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
