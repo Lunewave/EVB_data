@@ -1,9 +1,9 @@
 clear all;close all;clc;
-FOV = 6;
-path = 'D:\DATA\'; %keep trailing backslash
+FOV = 30;
+path = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ30_EL0_Step3_withLens_withEVB_noise\'; %keep trailing backslash
 
-start_angle = -3;
-end_angle = 3;
+start_angle = -15;
+end_angle = 15;
 step = 3;
 
 

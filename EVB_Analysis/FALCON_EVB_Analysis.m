@@ -2,10 +2,10 @@ close all; clear all; clc;
 
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
-save_figs = 0;
+save_figs = 1;
 frequency = 2456; %MHz
-lib_location = 'Marana Calibration Library';
-test_location = 'Marana Test';
+lib_location = 'Calibration Library';
+test_location = 'Office Test';
 
 noise_level_cal = 45;
 noise_level_test = 45;
@@ -18,7 +18,7 @@ shifts12 = [0 0 0 0 0 0];
 
 
 libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
-testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
+testpath = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -125,8 +125,11 @@ for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      %
 
         obj_az=obj_az_input
         obj_el=obj_el_input
+        % if obj_az == 36 && obj_el == 30
+        %     disp()
+        % end
         %Test vector
-        test=squeeze(Test_Complex(:,obj_az/AZ_step+(length(AZ_data)+1)/2,EL_steps-(obj_el)/abs(EL_step))); 
+        test=squeeze(Test_Complex(:,(obj_az-AZ_start)/AZ_step + 1,(EL_start-obj_el)/abs(EL_step) + 1)); 
 
 
         weighting=[1 1 1 1 1 1];
@@ -143,6 +146,8 @@ for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      %
         numpeaks2check = min(numpeaks2check, length(pks));
         peaks_az = locs_y(1:numpeaks2check);
         peaks_el = locs_x(1:numpeaks2check);
+        az_angs = AZ_step*(peaks_az-1) + AZ_start;
+        el_angs = EL_start + EL_step*(peaks_el-1);
         
 
 
@@ -213,7 +218,7 @@ elseif AZ_steps == 1
     ylim([-2 -0.25])
 else
     imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
-    % caxis([-8 0]);
+    caxis([-8 0]);
     colorbar;
     xlabel('AZ');ylabel('EL');
 end
@@ -245,7 +250,7 @@ EL_err_max_ITP=max(abs(tmp(:)));
 
 % ['AZ error average=' num2str(AZ_err_ave) ' deg;   AZ error std=' num2str(AZ_err_std) ' deg;']
 % ['EL error average=' num2str(EL_err_ave) ' deg;   EL error std=' num2str(EL_err_std) ' deg;']
-step_error = 4;
+step_error = 8;
 
 figure(10)
 subplot(1, 2, 1)
