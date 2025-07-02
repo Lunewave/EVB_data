@@ -61,7 +61,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
                 phase_3(frame_ind)=angle(freE(I))/pi*180; %EVB 5 Antenna 1
                 phase_4(frame_ind)=angle(freF(I))/pi*180; %EVB 6 Antenna 2
                 phase_5(frame_ind)=angle(freG(I))/pi*180; %EVB 7 Antenna 3
-                phase_6(frame_ind)=angle(freD(I))/pi*180; %EVB 4 Antenna 6
+                phase_6(frame_ind)=angle(freG(D))/pi*180; %EVB 4 Antenna 6
 
 
                 % Magnitude
@@ -79,7 +79,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
             % P_diff5=(mod(phase_5+180,360)-180).';
             % P_diff6=(mod(phase_6+180,360)-180).';
 
-            phase(:,k, i)=[median(phase_1) median(phase_2) median(phase_3) median(phase_4) median(phase_5) median(phase_6)];
+            phase(:,k, i)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6)];
             magnitude(:, k, i) = [median(c1) median(c2) median(c3) median(c4) median(c5) median(c6)];
             for antenna = 1:6
                 complex_values(antenna, k, i) = db2mag(magnitude(antenna, k, i))*exp(j.*phase(antenna, k, i)/180*pi);
