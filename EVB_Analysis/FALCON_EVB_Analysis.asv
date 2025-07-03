@@ -17,8 +17,8 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
-testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
+libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
+testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -68,9 +68,9 @@ for antenna_ind=1:6
             'HorizontalAlignment', 'left', ...
             'FontSize', 10);
         subplot(1,2,2)
-        plot(AZ_data,unwrap((mod(squeeze(Lib_Phase(antenna_ind, :, end))-squeeze(Lib_Phase(1, :, end))+180, 360)-180),180)+shifts1(antenna_ind));
+        plot(AZ_data,unwrap(squeeze(Lib_Phase(antenna_ind, :, end)),180)+shifts1(antenna_ind));
         grid on;hold on;
-        plot(AZ_data,unwrap((mod(squeeze(Test_Phase(antenna_ind, :, end))-squeeze(Test_Phase(1, :, end))+180, 360)-180),180)+shifts2(antenna_ind));
+        plot(AZ_data,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),360)-180,180)+shifts2(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
@@ -100,8 +100,6 @@ for antenna_ind=1:6
             'EdgeColor', 'none', ...
             'HorizontalAlignment', 'left', ...
             'FontSize', 10);
-                                                                (mod(phase_1+180,360)-180).'
-
         subplot(1,2,2)
         plot(EL_data,unwrap((mod(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :))-squeeze(Lib_Phase(1,(length(AZ_data)+1)/2, :))+180, 360)-180),180)+shifts11(antenna_ind));
         grid on;hold on;

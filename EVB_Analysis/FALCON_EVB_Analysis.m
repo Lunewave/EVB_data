@@ -1,7 +1,7 @@
 close all; clear all; clc;
 
-AZ_start = -180; AZ_end = 180; AZ_step = 1;
-EL_start = 0; EL_end = 0; EL_step = -3;
+AZ_start = -180; AZ_end = 180; AZ_step = 3;
+EL_start = 66; EL_end = 0; EL_step = -3;
 save_figs = 1;
 frequency = 2456; %MHz
 lib_location = 'Calibration Library';
@@ -17,8 +17,8 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -26,19 +26,21 @@ EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
 numpeaks2check = 4; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+offset = 0;
 lib_cache = fullfile(libpath, 'cached_library_data.mat');
 if isfile(lib_cache)
     load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 else
-    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset);
     save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
+offset = 2;
 test_cache = fullfile(testpath, 'cached_test_data.mat');
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 else
-    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
+    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps, offset);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 end
 
@@ -68,11 +70,11 @@ for antenna_ind=1:6
             'HorizontalAlignment', 'left', ...
             'FontSize', 10);
         subplot(1,2,2)
-        plot(AZ_data,unwrap(mod(squeeze(Lib_Phase(antenna_ind, :, end))-squeeze(Lib_Phase(1, :, end))+180,360)-180,180)+shifts1(antenna_ind));
+        plot(AZ_data,unwrap(squeeze(Lib_Phase(antenna_ind, :, end)),180)+shifts1(antenna_ind));
         grid on;hold on;
-        plot(AZ_data,unwrap(mod(squeeze(Test_Phase(antenna_ind, :, end))-squeeze(Test_Phase(1, :, end))+180,360)-180,180)+shifts2(antenna_ind));
+        plot(AZ_data,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase EL = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -101,11 +103,11 @@ for antenna_ind=1:6
             'HorizontalAlignment', 'left', ...
             'FontSize', 10);
         subplot(1,2,2)
-        plot(EL_data,unwrap((mod(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :))-squeeze(Lib_Phase(1,(length(AZ_data)+1)/2, :))+180, 360)-180),180)+shifts11(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
         grid on;hold on;
-        plot(EL_data,unwrap((mod(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :))-squeeze(Test_Phase(1,(length(AZ_data)+1)/2, :))+180, 360)-180),180)+shifts12(antenna_ind));
+        plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase AZ = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
