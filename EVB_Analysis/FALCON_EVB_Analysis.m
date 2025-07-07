@@ -125,9 +125,6 @@ for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      %
 
         obj_az=obj_az_input
         obj_el=obj_el_input
-        % if obj_az == 36 && obj_el == 30
-        %     disp()
-        % end
         %Test vector
         test=squeeze(Test_Complex(:,(obj_az-AZ_start)/AZ_step + 1,(EL_start-obj_el)/abs(EL_step) + 1)); 
 
@@ -250,7 +247,7 @@ EL_err_max_ITP=max(abs(tmp(:)));
 
 % ['AZ error average=' num2str(AZ_err_ave) ' deg;   AZ error std=' num2str(AZ_err_std) ' deg;']
 % ['EL error average=' num2str(EL_err_ave) ' deg;   EL error std=' num2str(EL_err_std) ' deg;']
-step_error = 8;
+step_error = 4;
 
 figure(10)
 subplot(1, 2, 1)

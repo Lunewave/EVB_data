@@ -9,7 +9,7 @@ az_steps = AZ_FOV/step + 1;
 EL_FOV = 66;
 el_steps = EL_FOV/step + 1;
 path = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary\';
-az_angle = -33;        el_angle = 30;
+az_angle = 21;        el_angle = 27;
 
 
 

@@ -1,8 +1,8 @@
 close all; clear all; clc;
 
 % --- User Parameters ---
-az_deg = 27;      % Azimuth angle in degrees (rotation about Z axis)
-el_deg = 27;       % Elevation angle in degrees (rotation about Y axis)
+az_deg = 36;      % Azimuth angle in degrees (rotation about Z axis)
+el_deg = 0;       % Elevation angle in degrees (rotation about Y axis)
 stl_file = 'falcon_model.stl';  % STL file name
 
 % --- Load STL ---
