@@ -23,4 +23,4 @@ diff = D2-D1;
 
 cycle_diff = diff/lambda;
 
-disp(['The two signal are ' num2str(cycle_diff) ' apart.'])
+disp(['The two signals are ' num2str(cycle_diff) ' wavelengths apart.'])
