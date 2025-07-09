@@ -29,7 +29,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
             C5= C0 (5:8:end,:).'; C_all(:,5)=C5(:);
             C6= C0 (6:8:end,:).'; C_all(:,6)=C6(:);
             C7= C0 (7:8:end,:).'; C_all(:,7)=C7(:);
-            C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:); 
+            % C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:); 
             
             C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
@@ -49,20 +49,20 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
                 [~,I]=max(abs(freD));
                 I=234;
                 % Phase Difference
-                phase_5(frame_ind)=angle(freB(I)/freE(I))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
-                phase_4(frame_ind)=angle(freC(I)/freE(I))/pi*180; %EVB 3 vs 5 i.e phase difference of antenna 4 relative to antenna 1
-                phase_1(frame_ind)=angle(freE(I)/freE(I))/pi*180; %EVB 5 vs 5 i.e phase difference of antenna 1 relative to antenna 1
-                phase_2(frame_ind)=angle(freF(I)/freE(I))/pi*180; %EVB 6 vs 5 i.e phase difference of antenna 2 relative to antenna 1
-                phase_3(frame_ind)=angle(freG(I)/freE(I))/pi*180; %EVB 7 vs 5 i.e phase difference of antenna 3 relative to antenna 1
-                phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
+                % phase_5(frame_ind)=angle(freB(I)/freE(I))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
+                % phase_4(frame_ind)=angle(freC(I)/freE(I))/pi*180; %EVB 3 vs 5 i.e phase difference of antenna 4 relative to antenna 1
+                % phase_1(frame_ind)=angle(freE(I)/freE(I))/pi*180; %EVB 5 vs 5 i.e phase difference of antenna 1 relative to antenna 1
+                % phase_2(frame_ind)=angle(freF(I)/freE(I))/pi*180; %EVB 6 vs 5 i.e phase difference of antenna 2 relative to antenna 1
+                % phase_3(frame_ind)=angle(freG(I)/freE(I))/pi*180; %EVB 7 vs 5 i.e phase difference of antenna 3 relative to antenna 1
+                % phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
 
 
-                % phase_5(frame_ind)=angle(freB(I)/freD(I))/pi*180;
-                % phase_4(frame_ind)=angle(freC(I)/freD(I))/pi*180;
-                % phase_1(frame_ind)=angle(freE(I)/freH(I))/pi*180;
-                % phase_2(frame_ind)=angle(freF(I)/freH(I))/pi*180;
-                % phase_3(frame_ind)=angle(freG(I)/freH(I))/pi*180;
-                % phase_6(frame_ind)=0;
+                phase_5(frame_ind)=angle(freB(I)/freE(D))/pi*180;
+                phase_4(frame_ind)=angle(freC(I)/freE(D))/pi*180;
+                phase_1(frame_ind)=angle(freE(I)/freE(H))/pi*180;
+                phase_2(frame_ind)=angle(freF(I)/freE(H))/pi*180;
+                phase_3(frame_ind)=angle(freG(I)/freE(H))/pi*180;
+                phase_6(frame_ind)=0;
 
 
 
@@ -74,11 +74,11 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
                 c1(frame_ind) = mag2db(abs(freE(I)));
                 c2(frame_ind) = mag2db(abs(freF(I)));
                 c3(frame_ind) = mag2db(abs(freG(I)));
-                % if mag2db(abs(freD(I)))>=mag2db(abs(freH(I)))
-                c6(frame_ind) = mag2db(abs(freD(I)));
-                % else
-                %     c6(frame_ind) = mag2db(abs(freH(I)));
-                % end
+                if mag2db(abs(freD(I)))>=mag2db(abs(freH(I)))
+                    c6(frame_ind) = mag2db(abs(freD(I)));
+                else
+                    c6(frame_ind) = mag2db(abs(freH(I)));
+                    
             end
             P_diff1=(mod(phase_1+180,360)-180).';
             P_diff2=(mod(phase_2+180,360)-180).';

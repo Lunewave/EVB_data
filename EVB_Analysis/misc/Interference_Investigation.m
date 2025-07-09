@@ -1,6 +1,6 @@
 D1 = 4.5; %Line of sight distance from horn antenna to Dipole in meters
 h = 0.07; %height of dipole above the ground plane in meters
-theta = 30; %Elevation angle down from horizontal in degrees
+theta = 60; %Elevation angle down from horizontal in degrees
 phi = 90-theta; %Angle of reflection off ground plane
 f = 2.456; %frequency in GHz
 

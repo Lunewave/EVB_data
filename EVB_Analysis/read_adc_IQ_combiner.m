@@ -1,12 +1,12 @@
 clear all;close all;clc;
-FOV = 30;
-path = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ30_EL0_Step3_withLens_withEVB_noise\'; %keep trailing backslash
+FOV = 18;
+path = 'U:\Falcon_Project\20250625_MaranaTest_AZ18_EL0_withLens_withEVB_Noise\'; %keep trailing backslash
 
-start_angle = -15;
-end_angle = 15;
+start_angle = 0;
+end_angle = 0;
 step = 3;
 
-
+noise = [];
 
 
 phase_diff_all = zeros(8, FOV+1);
@@ -71,6 +71,7 @@ freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8));
 % plot(fre/1e9,mag2db(abs(freA)));hold on;
 % plot(fre/1e9,mag2db(abs(freB)));
 % plot(fre/1e9,mag2db(abs(freC)));
+noise = [noise;mag2db(abs(freB)); mag2db(abs(freC)); mag2db(abs(freD)); mag2db(abs(freE)); mag2db(abs(freF)); mag2db(abs(freF))];
 
 
 xlabel('Frequency (GHz)');
@@ -167,3 +168,5 @@ plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
 % plot(fre/1e9+2.277, [mag2db(abs(freH(n/2+1:end))); mag2db(abs(freH(1:n/2)))]);
 xlabel('Frequency (GHz)')
 ylabel('Magnitude (dB)')
+
+median(noise)

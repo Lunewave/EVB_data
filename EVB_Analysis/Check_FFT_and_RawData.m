@@ -8,8 +8,8 @@ AZ_FOV = 360;
 az_steps = AZ_FOV/step + 1;
 EL_FOV = 66;
 el_steps = EL_FOV/step + 1;
-path = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary\';
-az_angle = 21;        el_angle = 27;
+path = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo\';
+az_angle = -12;        el_angle = 39;
 
 
 
@@ -53,7 +53,7 @@ plot(real(C1_cmplex(:,7)));
 xlabel('Sample index');
 ylabel('ADC output')
 xlim([1 128])
-title(['Real ADC at:   AZ ' num2str(az_angle) 'deg ;    EL ' num2str(el_angle) ' deg']);
+title(['Real Component of ADC at:   AZ ' num2str(az_angle) 'deg ;    EL ' num2str(el_angle) ' deg']);
 legend('Antenna 5','Antenna 4', 'Antenna 6', 'Antenna 1', 'Antenna 2', 'Antenna 3', 'Location', 'best');
 
 subplot(1,2,2)
@@ -67,7 +67,7 @@ plot(abs(C1_cmplex(:,7)));
 xlabel('Sample index');
 ylabel('ADC output')
 xlim([1 128])
-title(['Absolute ADC at:   AZ ' num2str(az_angle) 'deg ;    EL ' num2str(el_angle) ' deg']);
+title(['Absolute Value of ADC at:   AZ ' num2str(az_angle) 'deg ;    EL ' num2str(el_angle) ' deg']);
 legend('Antenna 5','Antenna 4', 'Antenna 6', 'Antenna 1', 'Antenna 2', 'Antenna 3', 'Location', 'best');
 
 
