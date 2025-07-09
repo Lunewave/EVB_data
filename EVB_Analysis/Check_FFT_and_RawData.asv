@@ -9,7 +9,7 @@ az_steps = AZ_FOV/step + 1;
 EL_FOV = 66;
 el_steps = EL_FOV/step + 1;
 path = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest\';
-az_angle = -51;        el_angle = 57;
+az_angle = -54;        el_angle = 57;
 
 
 

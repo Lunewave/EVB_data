@@ -1,11 +1,11 @@
 close all; clear all; clc;
 
-AZ_start = -180; AZ_end = 180; AZ_step = 1;
-EL_start = 0; EL_end = 0; EL_step = -3;
+AZ_start = -180; AZ_end = 180; AZ_step = 3;
+EL_start = 66; EL_end = 0; EL_step = -3;
 save_figs = 0;
 frequency = 2456; %MHz
 lib_location = 'Calibration Library';
-test_location = 'Marana Test';
+test_location = 'Office Test';
 
 noise_level_cal = 45;
 noise_level_test = 45;
@@ -14,11 +14,11 @@ shifts1 = [0 0 0 0 0 0];
 shifts2 = [0 0 0 0 0 0];
 
 shifts11 = [0 0 0 0 0 0];
-shifts12 = [0 0 0 0 0 0];
+shifts12 = [0 -360 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -496,3 +496,12 @@ if save_figs
     
     % close all
 end
+
+
+
+
+
+
+
+
+

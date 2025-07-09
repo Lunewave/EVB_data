@@ -2,7 +2,7 @@ close all; clear all; clc;
 
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
-save_figs = 1;
+save_figs = 0;
 frequency = 2456; %MHz
 lib_location = 'Calibration Library';
 test_location = 'Office Test';
@@ -17,8 +17,8 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 -360 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250611_MaranaTestLibrary_+-180deg_noLens_AZonly_withEVB_2.456GHz';
-testpath = 'U:\Falcon_Project\20250611_MaranaTestData_+-180deg_noLens_AZonly_withEVB_2.456GHz';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -496,3 +496,33 @@ if save_figs
     
     % close all
 end
+
+
+
+
+
+for i = 1:6
+min_val = min([min(squeeze(Lib_Mag(i, :, :))), squeeze(min(Test_Mag(i, :, :)))]);
+max_val = max([max(squeeze(Lib_Mag(i, :, :))), max(squeeze(Test_Mag(i, :, :)))]);
+clim_min = floor(min_val/5)*5
+clim_max = ceil(max_val/5)*5
+% figure(30 + i)
+% tiledlayout(1, 2, 'TileSpacing', 'compact', 'Padding', 'compact')
+% sgtitle(['Antenna ' num2str(i) ' Magnitude']);
+% nexttile
+% imagesc(AZ_data, EL_data, squeeze(Lib_Mag(i, :, :)));
+% xlabel('AZ'); ylabel('EL');
+% title('Library Magnitude');
+% clim([clim_min clim_max])
+% nexttile
+% imagesc(AZ_data, EL_data, squeeze(Test_Mag(i, :, :)));
+% xlabel('AZ'); ylabel('EL');
+% title('Test Magnitude');
+% clim([clim_min clim_max])
+% cb = colorbar;
+% cb.Layout.Tile = 'south';
+% set(gcf, 'Position',  [200, 200, 1200, 500]);
+end
+
+
+
