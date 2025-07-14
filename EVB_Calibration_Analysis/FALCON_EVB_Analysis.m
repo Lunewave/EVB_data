@@ -4,8 +4,8 @@ AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
 save_figs = 0;
 frequency = 2456; %MHz
-lib_location = 'Marana Calibration Library';
-test_location = 'Marana Test';
+lib_location = 'Calibration Library';
+test_location = 'Office Test';
 
 noise_level_cal = 45;
 noise_level_test = 45;
@@ -14,31 +14,33 @@ shifts1 = [0 0 0 0 0 0];
 shifts2 = [0 0 0 0 0 0];
 
 shifts11 = [0 0 0 0 0 0];
-shifts12 = [0 0 0 0 0 0];
+shifts12 = [0 -360 0 0 0 0];
 
 
 libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
-testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
+testpath = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
 EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
-numpeaks2check = 4; %# of peaks to check in each dimension of angle interpolation
+numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+offset = 0;
 lib_cache = fullfile(libpath, 'cached_library_data.mat');
 if isfile(lib_cache)
     load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 else
-    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps);
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset);
     save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
+offset = 0;
 test_cache = fullfile(testpath, 'cached_test_data.mat');
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 else
-    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps);
+    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps, offset);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 end
 
@@ -48,8 +50,14 @@ for antenna_ind=1:6
     if AZ_steps>1        
         LibMag = squeeze(Lib_Mag(antenna_ind,:, end));
         TestMag = squeeze(Test_Mag(antenna_ind,:, end));
-        aSNRLib = mean(LibMag - noise_level_cal);
-        aSNRTest = mean(TestMag - noise_level_test);
+        % Convert to linear power scale
+        LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+        TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+        
+        % Compute mean in linear scale
+        aSNRLib  = 10 * log10(mean(LibPowerLinear));
+        aSNRTest = 10 * log10(mean(TestPowerLinear));
+
         
         figure(100+antenna_ind)
         subplot(1,2,1)
@@ -59,21 +67,24 @@ for antenna_ind=1:6
         xlabel('Azimuth Angle (deg)'); ylabel('Magnitude (dB)');
         title(['Antenna ' int2str(antenna_ind) ' magnitude EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
-        snr_text = sprintf(['Average SNR ' lib_location ': %.2f dB\n' ...
-                            'Average SNR ' test_location ': %.2f dB'], aSNRLib, aSNRTest);
-        annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
-            'String', snr_text, ...
-            'FitBoxToText', 'on', ...
-            'EdgeColor', 'none', ...
-            'HorizontalAlignment', 'left', ...
-            'FontSize', 10);
+        snr_text = sprintf(['Average ' lib_location ' Azimuth SNR: %.2f dB     ' ...
+                            'Average ' test_location ' Azimuth SNR: %.2f dB'], aSNRLib, aSNRTest);
         
+        uicontrol('Style', 'text', ...
+                  'String', snr_text, ...
+                  'Units', 'normalized', ...
+                  'Position', [0, 0, 1, 0.03], ...  % bottom strip
+                  'HorizontalAlignment', 'center', ...
+                  'FontSize', 10, ...
+                  'BackgroundColor', get(gcf, 'Color'), ...
+                  'ForegroundColor', 'k', ...
+                  'Tag', 'snr_footer');
         subplot(1,2,2)
         plot(AZ_data,unwrap(squeeze(Lib_Phase(antenna_ind, :, end)),180)+shifts1(antenna_ind));
         grid on;hold on;
         plot(AZ_data,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase EL = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -82,8 +93,14 @@ for antenna_ind=1:6
 
         LibMag = squeeze(Lib_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
         TestMag = squeeze(Test_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
-        aSNRLib = mean(LibMag - noise_level_cal);
-        aSNRTest = mean(TestMag - noise_level_test);
+        % Convert to linear power scale
+        LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+        TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+        
+        % Compute mean in linear scale
+        aSNRLib  = 10 * log10(mean(LibPowerLinear));
+        aSNRTest = 10 * log10(mean(TestPowerLinear));
+
         
         figure(110+antenna_ind)
         subplot(1,2,1)
@@ -93,21 +110,24 @@ for antenna_ind=1:6
         xlabel('Elevation Angle (deg)'); ylabel('Magnitude (dB)');
         title(['Antenna ' int2str(antenna_ind) ' magnitude AZ = 0']);
         legend(lib_location, test_location, 'Location', 'best');
-        snr_text = sprintf(['Average SNR ' lib_location ': %.2f dB\n' ...
-                            'Average SNR ' test_location ': %.2f dB'], aSNRLib, aSNRTest);
-        annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
-            'String', snr_text, ...
-            'FitBoxToText', 'on', ...
-            'EdgeColor', 'none', ...
-            'HorizontalAlignment', 'left', ...
-            'FontSize', 10);
+        snr_text = sprintf(['Average ' lib_location ' Elevation SNR: %.2f dB     ' ...
+                            'Average ' test_location ' Elevation SNR: %.2f dB'], aSNRLib, aSNRTest);
         
+        uicontrol('Style', 'text', ...
+                  'String', snr_text, ...
+                  'Units', 'normalized', ...
+                  'Position', [0, 0, 1, 0.03], ...  % bottom strip
+                  'HorizontalAlignment', 'center', ...
+                  'FontSize', 10, ...
+                  'BackgroundColor', get(gcf, 'Color'), ...
+                  'ForegroundColor', 'k', ...
+                  'Tag', 'snr_footer');
         subplot(1,2,2)
         plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
         grid on;hold on;
         plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 6 phase AZ = 0']);
+        title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
         legend(lib_location, test_location, 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
     end
@@ -126,7 +146,7 @@ for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      %
         obj_az=obj_az_input
         obj_el=obj_el_input
         %Test vector
-        test=squeeze(Test_Complex(:,obj_az/AZ_step+(length(AZ_data)+1)/2,EL_steps-(obj_el)/abs(EL_step))); 
+        test=squeeze(Test_Complex(:,(obj_az-AZ_start)/AZ_step + 1,(EL_start-obj_el)/abs(EL_step) + 1)); 
 
 
         weighting=[1 1 1 1 1 1];
@@ -143,6 +163,8 @@ for obj_az_input=  AZ_start:AZ_step:AZ_end   %-140:2:140;                      %
         numpeaks2check = min(numpeaks2check, length(pks));
         peaks_az = locs_y(1:numpeaks2check);
         peaks_el = locs_x(1:numpeaks2check);
+        az_angs = AZ_step*(peaks_az-1) + AZ_start;
+        el_angs = EL_start + EL_step*(peaks_el-1);
         
 
 
@@ -213,7 +235,7 @@ elseif AZ_steps == 1
     ylim([-2 -0.25])
 else
     imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
-    % caxis([-8 0]);
+    caxis([-8 0]);
     colorbar;
     xlabel('AZ');ylabel('EL');
 end
@@ -245,15 +267,15 @@ EL_err_max_ITP=max(abs(tmp(:)));
 
 % ['AZ error average=' num2str(AZ_err_ave) ' deg;   AZ error std=' num2str(AZ_err_std) ' deg;']
 % ['EL error average=' num2str(EL_err_ave) ' deg;   EL error std=' num2str(EL_err_std) ' deg;']
-step_error = 4;
+step_error = 15;
 
 figure(10)
 subplot(1, 2, 1)
 if EL_steps>1
-    imagesc(AZ_data,EL_data,AZ_err(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis(AZ_step * [-step_error, step_error]);
+    imagesc(AZ_data,EL_data,abs(AZ_err(1:AZ_step:end,1:abs(EL_step):end).'));
+    caxis(AZ_step * [-0, step_error]);
     cb = colorbar;
-    set(cb, 'Ticks', (-step_error * AZ_step) : AZ_step : (step_error * AZ_step));
+    set(cb, 'Ticks', (-step_error * 0) : AZ_step : (step_error * AZ_step));
     xlabel('AZ');ylabel('EL');
 
 else
@@ -276,10 +298,10 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
     'FontSize', 9);
 subplot(1, 2, 2)
 if EL_steps>1
-    imagesc(AZ_data,EL_data,AZ_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis(AZ_step * [-step_error, step_error]);
+    imagesc(AZ_data,EL_data,abs(AZ_err_ITP(1:AZ_step:end,1:abs(EL_step):end).'));
+    caxis(AZ_step * [-0, step_error]);
     cb = colorbar;
-    set(cb, 'Ticks', (-step_error * AZ_step) : AZ_step : (step_error * AZ_step));
+    set(cb, 'Ticks', (-step_error * 0) : AZ_step : (step_error * AZ_step));
     xlabel('AZ');ylabel('EL');
 
 else
@@ -305,10 +327,10 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 figure(11)
 subplot(1, 2, 1)
 if AZ_steps>1
-    imagesc(AZ_data,EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis(-EL_step * [-step_error, step_error]);
+    imagesc(AZ_data,EL_data,abs(EL_err(1:AZ_step:end,1:abs(EL_step):end).'));
+    caxis(-EL_step * [-0, step_error]);
     cb = colorbar;
-    set(cb, 'Ticks', (step_error * EL_step) : -EL_step : (-step_error * EL_step));
+    set(cb, 'Ticks', (step_error * 0) : -EL_step : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
     plot(EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
@@ -330,10 +352,10 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
     'FontSize', 9);
 subplot(1, 2, 2)
 if AZ_steps>1
-    imagesc(AZ_data,EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
-    caxis(-EL_step * [-step_error, step_error]);
+    imagesc(AZ_data,EL_data,abs(EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).'));
+    caxis(-EL_step * [-0, step_error]);
     cb = colorbar;
-    set(cb, 'Ticks', (step_error * EL_step) : -EL_step : (-step_error * EL_step));
+    set(cb, 'Ticks', (step_error * 0) : -EL_step : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
     plot(EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
@@ -474,3 +496,12 @@ if save_figs
     
     % close all
 end
+
+
+
+
+
+
+
+
+

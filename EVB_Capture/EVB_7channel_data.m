@@ -1,10 +1,10 @@
 clc;clear all;close all;
 
 
-azi_step=3;
+azi_step=5;
 ele_step=3;
 AZFOV=360;
-ELFOV = 66;
+ELFOV = 0;
 NeleRotation = ELFOV/ele_step+1;
 Nazirotation = AZFOV/azi_step+1;
 
@@ -15,6 +15,13 @@ ele_init = -ELFOV;
 % Setup Control from Host PC to EVB
 evb= serialport('COM10', 115200);
 evb.Timeout = 1;
+
+
+write(evb, 's', 'char');
+write(evb,newline, 'char');
+
+GetConfirmFromEVB(evb, 'WaitForChar');
+disp('First frame captured')
 
 
 aziele_cur = [0 0];
