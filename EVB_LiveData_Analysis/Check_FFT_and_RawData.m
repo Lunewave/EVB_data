@@ -3,8 +3,8 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2\';
-frame = 4;
+path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-10\';
+frame = 40;
 
 
 
@@ -78,6 +78,22 @@ freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5));
 freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6));
 freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7));
 freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8));
+
+
+n = length(fre);
+figure(20)
+hold on; grid on;
+plot(fre/1e9+2.277, [mag2db(abs(freB(n/2+1:end))); mag2db(abs(freB(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freC(n/2+1:end))); mag2db(abs(freC(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freD(n/2+1:end))); mag2db(abs(freD(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freE(n/2+1:end))); mag2db(abs(freE(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freF(n/2+1:end))); mag2db(abs(freF(1:n/2)))]);
+plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
+% plot(fre/1e9+2.277, [mag2db(abs(freH(n/2+1:end))); mag2db(abs(freH(1:n/2)))]);
+xlabel('Frequency (GHz)')
+ylabel('Magnitude (dB)')
+ylim([40 100])
+xlim([2.4 2.5])
 end
 
 
