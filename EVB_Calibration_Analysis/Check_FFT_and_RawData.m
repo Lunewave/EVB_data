@@ -4,12 +4,12 @@
 
 clear all;close all;clc;
 step = 3;
-AZ_FOV = 30;
+AZ_FOV = 360;
 az_steps = AZ_FOV/step + 1;
-EL_FOV = 0;
+EL_FOV = 66;
 el_steps = EL_FOV/step + 1;
 path = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ30_EL0_Step3_withLens_withEVB_noise\';
-az_angle = 15;        el_angle = 0;
+az_angle = 0;        el_angle = 0;
 
 
 
