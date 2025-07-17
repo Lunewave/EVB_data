@@ -6,7 +6,7 @@ test_location = 'Drone Test';
 noise_level_test = 45;
 testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-10';
 
-angle = 42;
+
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
@@ -261,7 +261,7 @@ sgtitle(sprintf('Elevation Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 2), 'o-')
 hold on
-plot(angle*ones(1, num_files), 'o-')
+plot(45*ones(1, num_files), 'o-')
 title('No Interpolation')
 xlabel('Frame')
 ylabel('Elevation Angle')
@@ -270,7 +270,7 @@ legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 2), 'o-')
 hold on
-plot(angle*ones(1, num_files), 'o-')
+plot(45*ones(1, num_files), 'o-')
 title('Interpolation')
 xlabel('Frame')
 ylabel('Elevation Angle')
@@ -279,7 +279,7 @@ legend('Test Data', 'Ground Truth', 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 gnd_truth_matrix(:, 1) = (-180:5:180)';
-gnd_truth_matrix(:, 2) = angle*ones(1, num_files);
+gnd_truth_matrix(:, 2) = 45*ones(1, num_files);
 AF_error = mod(AF_results-gnd_truth_matrix+180,360)-180;
 AF_ITP_error = mod(AF_ITP_results-gnd_truth_matrix+180,360)-180;
 
@@ -304,26 +304,7 @@ figure(4)
 plot(numgoodframes)
 grid on
 xlabel('File #')
-ylabel('Frames with Strong Drone Signal')
-title('Number of Frames with Drone Signal')
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
-figure(5)
-scatter(AF_ITP_results(:, 1), AF_ITP_results(:, 2), 'filled')
-hold on
-for i = 1:num_files
-    text(AF_ITP_results(i, 1), AF_ITP_results(i, 2), num2str(i), ...
-        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
-end
-
-xlabel('Azimuth Angle (deg)')
-ylabel('Elevation Angle (deg)')
-title('Drone Path')
-grid on
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
+ylabel()
 
 
 
@@ -339,9 +320,13 @@ if save_figs
     else
         fprintf('Folder "%s" already exists.\n', folderName);
     end
-    saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
-    saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
-    saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
+    
+    
+
+        saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
+        saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
+
+
 end
 
 

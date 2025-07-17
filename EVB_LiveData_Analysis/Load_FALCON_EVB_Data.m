@@ -35,7 +35,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
 
             
             
-            for frame_ind=1:512
+            for frame_ind=1:1024
                 % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
                 freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
                 freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3

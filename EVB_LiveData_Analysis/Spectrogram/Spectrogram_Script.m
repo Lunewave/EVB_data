@@ -4,7 +4,7 @@
 
 clear all;close all;clc;
 path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2\';
-frame = 73;
+frame = 37;
 
 DMA=1;
 num_frames = 0;
@@ -67,7 +67,7 @@ for i = frame:frame+num_frames
         
             % Construct custom x-axis: one label per column in spectrogram
             num_frames = size(s, 2);
-            frame_numbers = linspace(1, 512, num_frames);  % span full 512 frames
+            frame_numbers = linspace(1, 1024, num_frames);  % span full 1024 frames
         
             % Plot spectrogram with RF-aligned y-axis and frame-based x-axis
             imagesc(frame_numbers, rf_freq(end:-1:1)/1e9, 20*log10(abs(s(end:-1:1, :))));
@@ -91,7 +91,7 @@ for i = frame:frame+num_frames
         samples_per_frame = 1024;
         frames_per_burst = 8;
         samples_per_burst = samples_per_frame * frames_per_burst;
-        num_bursts = 512 / frames_per_burst;
+        num_bursts = 1024 / frames_per_burst;
         antenna_order = [5 4 6 1 2 3];
         
         for ch = 2:7
@@ -130,7 +130,7 @@ for i = frame:frame+num_frames
             colorbar;
         
             hold on;
-            for k = 8:8:512
+            for k = 8:8:1024
                 xline(k + 0.5, 'k-', 'LineWidth', 0.5);
             end
         end

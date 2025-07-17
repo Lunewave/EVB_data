@@ -3,11 +3,11 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary\';
-frame = 2710;
+path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2\';
+frame = 73;
 
 DMA=1;
-num_frames = 10;
+num_frames = 0;
 
 
 for i = frame:frame+num_frames
@@ -55,30 +55,32 @@ for i = frame:frame+num_frames
         nfft = 1024;                % Number of FFT points
         fs = 245.76e6;  % 245.76 MHz
             
-        fc = 2.4e9;  % example center frequency
+        fc = 2.4e9;  % or whatever center frequency you're using
         
         for ch = 2:7
             subplot(2, 3, ch-1);
-            
+        
             signal = C1_cmplex(:, ch);
-            
-            [s, f, t] = spectrogram(signal, window_size, overlap, nfft, fs, 'centered');
+        
+            [s, f, ~] = spectrogram(signal, window_size, overlap, nfft, fs, 'centered');
             rf_freq = f + fc;
-            
-            imagesc(t, rf_freq(end:-1:1)/1e9, 20*log10(abs(s(end:-1:1, :))));
+        
+            % Construct custom x-axis: one label per column in spectrogram
+            num_frames = size(s, 2);
+            frame_numbers = linspace(1, 1024, num_frames);  % span full 1024 frames
+        
+            % Plot spectrogram with RF-aligned y-axis and frame-based x-axis
+            imagesc(frame_numbers, rf_freq(end:-1:1)/1e9, 20*log10(abs(s(end:-1:1, :))));
             axis xy;
             title(['Spectrogram - Antenna ' num2str(antenna_order(ch-1))]);
-            xlabel('Time (s)');
+            xlabel('Frame Number');
             ylabel('Frequency (GHz)');
-            
-            % Force Y-axis ticks every 0.01 GHz
-            ytick_vals = round(min(rf_freq)/1e6)*1e6 : 10e6 : round(max(rf_freq)/1e6)*1e6;
-            yticks(ytick_vals / 1e9);
-            
             colormap turbo;
             colorbar;
-    
         end
+        
+        sgtitle('Spectrograms of Antennas 1–6 (RF-Aligned by Frame)');
+
     
     else
         fc = 2.4e9;                     % Center frequency (adjust as needed)
@@ -89,7 +91,7 @@ for i = frame:frame+num_frames
         samples_per_frame = 1024;
         frames_per_burst = 8;
         samples_per_burst = samples_per_frame * frames_per_burst;
-        num_bursts = 512 / frames_per_burst;
+        num_bursts = 1024 / frames_per_burst;
         antenna_order = [5 4 6 1 2 3];
         
         for ch = 2:7
@@ -128,7 +130,7 @@ for i = frame:frame+num_frames
             colorbar;
         
             hold on;
-            for k = 8:8:512
+            for k = 8:8:1024
                 xline(k + 0.5, 'k-', 'LineWidth', 0.5);
             end
         end

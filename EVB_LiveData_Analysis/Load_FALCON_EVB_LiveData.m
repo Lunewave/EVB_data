@@ -1,4 +1,4 @@
-function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveData(path,offset, data_freq)
+function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FALCON_EVB_LiveData(path,offset, data_freq)
 % Load_FALCON_EVB_Data loads and processes binary EVB data into magnitude, phase, and complex values.
 %
 % Inputs:
@@ -16,6 +16,7 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
     magnitude = zeros(6, num_files);
     phase = zeros(6, num_files);
     complex_values = zeros(6, num_files);
+    frames_passed = zeros(1, num_files);
     fre_sample=2.94912e9/12;
     fre=[0:1023]/1024*fre_sample;
     a = fre/1e9+2.277;
@@ -43,8 +44,8 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
         C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
         
-        
-        for frame_ind=1:512
+        passed = 0;
+        for frame_ind=1:1024
             % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
             freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
             freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
@@ -55,8 +56,15 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
             % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
             
             
-            % [~,I]=max(abs(freD));
-            % I=117; %2.42 GHz
+            % Magnitude
+            a5(frame_ind) = mag2db(abs(freB(I)));
+            a4(frame_ind) = mag2db(abs(freC(I)));
+            a1(frame_ind) = mag2db(abs(freE(I)));
+            a2(frame_ind) = mag2db(abs(freF(I)));
+            a3(frame_ind) = mag2db(abs(freG(I)));
+            a6(frame_ind) = mag2db(abs(freD(I)));
+
+
             % Phase Difference
             phase_5(frame_ind)=angle(freB(I)/freE(I))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
             phase_4(frame_ind)=angle(freC(I)/freE(I))/pi*180; %EVB 3 vs 5 i.e phase difference of antenna 4 relative to antenna 1
@@ -66,29 +74,34 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
             phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
 
 
-            % phase_5(frame_ind)=angle(freB(I)/freD(I))/pi*180;
-            % phase_4(frame_ind)=angle(freC(I)/freD(I))/pi*180;
-            % phase_1(frame_ind)=angle(freE(I)/freH(I))/pi*180;
-            % phase_2(frame_ind)=angle(freF(I)/freH(I))/pi*180;
-            % phase_3(frame_ind)=angle(freG(I)/freH(I))/pi*180;
-            % phase_6(frame_ind)=0;
+            signal_threshold = 60;
+            
+            if a1(frame_ind) < signal_threshold || ...
+               a2(frame_ind) < signal_threshold || ...
+               a3(frame_ind) < signal_threshold || ...
+               a4(frame_ind) < signal_threshold || ...
+               a5(frame_ind) < signal_threshold || ...
+               a6(frame_ind) < signal_threshold
+            
+                a1(frame_ind) = NaN;
+                a2(frame_ind) = NaN;
+                a3(frame_ind) = NaN;
+                a4(frame_ind) = NaN;
+                a5(frame_ind) = NaN;
+                a6(frame_ind) = NaN;
+            
+                phase_1(frame_ind) = NaN;
+                phase_2(frame_ind) = NaN;
+                phase_3(frame_ind) = NaN;
+                phase_4(frame_ind) = NaN;
+                phase_5(frame_ind) = NaN;
+                phase_6(frame_ind) = NaN;
+            else
+                passed = passed + 1;
+            end
 
-
-
-
-
-            % Magnitude
-            a5(frame_ind) = mag2db(abs(freB(I)));
-            a4(frame_ind) = mag2db(abs(freC(I)));
-            a1(frame_ind) = mag2db(abs(freE(I)));
-            a2(frame_ind) = mag2db(abs(freF(I)));
-            a3(frame_ind) = mag2db(abs(freG(I)));
-            % if mag2db(abs(freD(I)))>=mag2db(abs(freH(I)))
-            a6(frame_ind) = mag2db(abs(freD(I)));
-            % else
-            %     c6(frame_ind) = mag2db(abs(freH(I)));
-            % end
         end
+        frames_passed(i) = passed;
         P_diff1=(mod(phase_1+180,360)-180).';
         P_diff2=(mod(phase_2+180,360)-180).';
         P_diff3=(mod(phase_3+180,360)-180).';
@@ -96,25 +109,14 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
         P_diff5=(mod(phase_5+180,360)-180).';
         P_diff6=(mod(phase_6+180,360)-180).';
 
-        signal_threshold = 60;
-        percentage = 0.5;
-        if mean(a1 > signal_threshold) >= percentage && ...
-           mean(a2 > signal_threshold) >= percentage && ...
-           mean(a3 > signal_threshold) >= percentage && ...
-           mean(a4 > signal_threshold) >= percentage && ...
-           mean(a5 > signal_threshold) >= percentage && ...
-           mean(a6 > signal_threshold) >= percentage
 
-            phase(:,i)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6)];
-            magnitude(:, i) = [median(a1) median(a2) median(a3) median(a4) median(a5) median(a6)];
-            for antenna = 1:6
-                complex_values(antenna, i) = db2mag(magnitude(antenna, i))*exp(j.*phase(antenna, i)/180*pi);
-            end
-        else
-            phase(:, i) = NaN(1, 6);
-            magnitude(:, i) = NaN(1, 6);
-            complex_values(:, i) = NaN(6, 1);
+
+
+        phase(:,i)=[median(P_diff1, 'omitnan') median(P_diff2, 'omitnan') median(P_diff3, 'omitnan') median(P_diff4, 'omitnan') median(P_diff5, 'omitnan') median(P_diff6, 'omitnan')];
+        magnitude(:, i) = [median(a1, 'omitnan') median(a2, 'omitnan') median(a3, 'omitnan') median(a4, 'omitnan') median(a5, 'omitnan') median(a6, 'omitnan')];
+        for antenna = 1:6
+            complex_values(antenna, i) = db2mag(magnitude(antenna, i))*exp(j.*phase(antenna, i)/180*pi);
         end
+
     end
 end
-
