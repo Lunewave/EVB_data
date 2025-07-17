@@ -3,8 +3,8 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250714_LWOfficeTest_AZ20_EL0_Step5_withLens_withEVB_DroneDebug\Room_with_drone_and remote\';
-frame = 3;
+path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2\';
+frame = 36;
 
 
 
@@ -30,20 +30,20 @@ fileID = fopen([path num2str(frame,'%04d') '.BIN'], 'r', 'ieee-le');
 % 
 % C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
-% C = fread(fileID, Inf, 'int16');fclose(fileID);
-% C0 = reshape(C,[8,length(C)/8]).';
-% L_C0=length(C0);
-% 
-% C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
-% C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
-% C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
-% C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
-% C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
-% C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
-% C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
-% C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:); 
-% 
-% C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+C = fread(fileID, Inf, 'int16');fclose(fileID);
+C0 = reshape(C,[8,length(C)/8]).';
+L_C0=length(C0);
+
+C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
+C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
+C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
+C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
+C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
+C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
+C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
+C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:); 
+
+C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
 
 

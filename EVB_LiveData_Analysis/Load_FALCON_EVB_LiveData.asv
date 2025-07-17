@@ -78,13 +78,13 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
 
 
             % Magnitude
-            a5(frame_ind) = mag2db(abs(freB(I)));
-            a4(frame_ind) = mag2db(abs(freC(I)));
-            a1(frame_ind) = mag2db(abs(freE(I)));
-            a2(frame_ind) = mag2db(abs(freF(I)));
-            a3(frame_ind) = mag2db(abs(freG(I)));
+            c5(frame_ind) = mag2db(abs(freB(I)));
+            c4(frame_ind) = mag2db(abs(freC(I)));
+            c1(frame_ind) = mag2db(abs(freE(I)));
+            c2(frame_ind) = mag2db(abs(freF(I)));
+            c3(frame_ind) = mag2db(abs(freG(I)));
             % if mag2db(abs(freD(I)))>=mag2db(abs(freH(I)))
-            a6(frame_ind) = mag2db(abs(freD(I)));
+            c6(frame_ind) = mag2db(abs(freD(I)));
             % else
             %     c6(frame_ind) = mag2db(abs(freH(I)));
             % end
@@ -96,24 +96,21 @@ function [magnitude, phase, complex_values, num_files] = Load_FALCON_EVB_LiveDat
         P_diff5=(mod(phase_5+180,360)-180).';
         P_diff6=(mod(phase_6+180,360)-180).';
 
-        signal_threshold = 60;
-        percentage = 0.5;
-        if mean(a1 > signal_threshold) >= percentage && ...
-           mean(a2 > signal_threshold) >= percentage && ...
-           mean(a3 > signal_threshold) >= percentage && ...
-           mean(a4 > signal_threshold) >= percentage && ...
-           mean(a5 > signal_threshold) >= percentage && ...
-           mean(a6 > signal_threshold) >= percentage
 
-            phase(:,i)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6)];
-            magnitude(:, i) = [median(a1) median(a2) median(a3) median(a4) median(a5) median(a6)];
-            for antenna = 1:6
-                complex_values(antenna, i) = db2mag(magnitude(antenna, i))*exp(j.*phase(antenna, i)/180*pi);
-            end
-        else
-            phase(:, i) = NaN(1, 6);
-            magnitude(:, i) = NaN(1, 6);
-            complex_values(:, i) = NaN(6, 1);
+        if mean()
+
+
+
+
+
+
+
+
+
+        phase(:,i)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6)];
+        magnitude(:, i) = [median(c1) median(c2) median(c3) median(c4) median(c5) median(c6)];
+        for antenna = 1:6
+            complex_values(antenna, i) = db2mag(magnitude(antenna, i))*exp(j.*phase(antenna, i)/180*pi);
         end
     end
 end

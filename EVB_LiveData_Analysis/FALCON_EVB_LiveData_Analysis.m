@@ -4,7 +4,7 @@ save_figs = 0;
 frequency = 2456; %MHz
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
+testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-10';
 
 
 
@@ -30,11 +30,12 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
+data_freq = 2.427; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, 'cached_test_data.mat');
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files');
 else
-    [Test_Mag, Test_Phase, Test_Complex, num_files] = Load_FALCON_EVB_LiveData(testpath, offset);
+    [Test_Mag, Test_Phase, Test_Complex, num_files] = Load_FALCON_EVB_LiveData(testpath, offset, data_freq);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files');
 end
 
@@ -141,62 +142,70 @@ for ifile= 1:num_files   %-140:2:140;                      % object AZ angle inp
         %Test vector
         test=squeeze(Test_Complex(:, ifile)); 
 
-
-        weighting=[1 1 1 1 1 1];
-        for az=1:AZ_steps
-            for el=1:EL_steps
-                r=corrcoef(test.*weighting,squeeze(Lib_Complex(:,az,el)).*weighting);
-                coe(az,el)=r(1,2);
-            end
-        end
-        cf_reshape=reshape(abs(coe),[length_az length_el]);
-        % Find peaks and use max peak
-        [pks,locs_y,locs_x]=peaks2(abs(coe),'MinPeakHeight',0.0,'MinPeakDistance',10);
-        best_error = inf;
-        numpeaks2check = min(numpeaks2check, length(pks));
-        peaks_az = locs_y(1:numpeaks2check);
-        peaks_el = locs_x(1:numpeaks2check);
-        az_angs = AZ_step*(peaks_az-1) + AZ_start;
-        el_angs = EL_start + EL_step*(peaks_el-1);
-        
-
-
-        for i = 1:numpeaks2check
-            peak_az = locs_y(i);
-            peak_el = locs_x(i);
-             % Define Azimuth Neighborhood w/o wrapping
-            delta_az = 0; % Assume no interpolation
-            if peak_az > 1 && peak_az < length_az %&& obj_az_input > AZ_start && obj_az_input < AZ_end
-                a = cf_reshape(peak_az - 1, peak_el);
-                b = cf_reshape(peak_az, peak_el);
-                c = cf_reshape(peak_az + 1, peak_el);
-                if (a ~= c)
-                    delta_az = 0.5 * (a - c) / (a - 2*b + c);
+        if isnan(test)
+            AF_results(ifile,:) = [NaN NaN];
+            AF_ITP_results(ifile,:) = [NaN NaN];
+        else
+            weighting=[1 1 1 1 1 1];
+            for az=1:AZ_steps
+                for el=1:EL_steps
+                    r=corrcoef(test.*weighting,squeeze(Lib_Complex(:,az,el)).*weighting);
+                    coe(az,el)=r(1,2);
                 end
             end
-            % Define Elevation Neighborhood w/o wrapping
-            delta_el = 0; % Assume no interpolation
-            if peak_el > 1 && peak_el < length_el %&& obj_el_input < EL_start && obj_el_input > EL_end
-                a1 = cf_reshape(peak_az, peak_el - 1);
-                b1 = cf_reshape(peak_az, peak_el);
-                c1 = cf_reshape(peak_az, peak_el + 1);
-                if (a1 ~= c1)
-                    delta_el = 0.5 * (a1 - c1) / (a1 - 2*b1 + c1);
+            cf_reshape=reshape(abs(coe),[length_az length_el]);
+            % Find peaks and use max peak
+            [pks,locs_y,locs_x]=peaks2(abs(coe),'MinPeakHeight',0.0,'MinPeakDistance',10);
+            best_error = inf;
+            numpeaks2check = min(numpeaks2check, length(pks));
+            peaks_az = locs_y(1:numpeaks2check);
+            peaks_el = locs_x(1:numpeaks2check);
+            az_angs = AZ_step*(peaks_az-1) + AZ_start;
+            el_angs = EL_start + EL_step*(peaks_el-1);
+            
+    
+    
+            for i = 1:numpeaks2check
+                peak_az = locs_y(i);
+                peak_el = locs_x(i);
+                 % Define Azimuth Neighborhood w/o wrapping
+                delta_az = 0; % Assume no interpolation
+                if peak_az > 1 && peak_az < length_az %&& obj_az_input > AZ_start && obj_az_input < AZ_end
+                    a = cf_reshape(peak_az - 1, peak_el);
+                    b = cf_reshape(peak_az, peak_el);
+                    c = cf_reshape(peak_az + 1, peak_el);
+                    if (a ~= c)
+                        delta_az = 0.5 * (a - c) / (a - 2*b + c);
+                    end
                 end
+                % Define Elevation Neighborhood w/o wrapping
+                delta_el = 0; % Assume no interpolation
+                if peak_el > 1 && peak_el < length_el %&& obj_el_input < EL_start && obj_el_input > EL_end
+                    a1 = cf_reshape(peak_az, peak_el - 1);
+                    b1 = cf_reshape(peak_az, peak_el);
+                    c1 = cf_reshape(peak_az, peak_el + 1);
+                    if (a1 ~= c1)
+                        delta_el = 0.5 * (a1 - c1) / (a1 - 2*b1 + c1);
+                    end
+                end
+                % Initial uninterpolated peak positions
+                AZ_peak(i) = AZ_table(peak_az);
+                EL_peak(i) = EL_table(peak_el);
+                % Final interpolated peak positions
+                AZ_peak_itp(i) = AZ_peak(i) + delta_az * AZ_step;
+                EL_peak_itp(i) = EL_peak(i) + delta_el * EL_step;
+    
             end
-            % Initial uninterpolated peak positions
-            AZ_peak(i) = AZ_table(peak_az);
-            EL_peak(i) = EL_table(peak_el);
-            % Final interpolated peak positions
-            AZ_peak_itp(i) = AZ_peak(i) + delta_az * AZ_step;
-            EL_peak_itp(i) = EL_peak(i) + delta_el * EL_step;
-
+            % Save results
+            AF_results(ifile,:) = [AZ_peak(1) EL_peak(1)];
+            AF_ITP_results(ifile,:) = [AZ_peak_itp(1) EL_peak_itp(1)];
         end
-        % Save results
-        AF_results(ifile,:) = [AZ_peak(1) EL_peak(1)];
-        AF_ITP_results(ifile,:) = [AZ_peak_itp(1) EL_peak_itp(1)];
 
 end
+
+AF_results=mod(AF_results+180,360)-180;
+AF_ITP_results=mod(AF_ITP_results+180,360)-180;
+
 
 
 figure(1000)
@@ -215,7 +224,7 @@ else
     xlabel('AZ');ylabel('EL');
 end
 title(['Frame:  ' num2str(ifile)]);
-
+%% Plot Figures
 figure(1)
 sgtitle(sprintf('Azimuth Results'));
 subplot(1, 2, 1)
