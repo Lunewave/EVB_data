@@ -4,9 +4,7 @@ save_figs = 1;
 frequency = 2456; %MHz
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-10';
-
-angle = 42;
+testpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
@@ -15,13 +13,13 @@ AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
 EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
-numpeaks2check = 2; %# of peaks to check in each dimension of angle interpolation
+numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
 lib_location = 'Calibration Library';
 noise_level_cal = 45;
 libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
 offset = 0;
-lib_cache = fullfile(libpath, 'cached_library_data.mat');
+lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
     load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 else
@@ -29,9 +27,9 @@ else
     save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
-offset = 0;
-data_freq = 2.427; %Frequency of test data signal in GHz
-test_cache = fullfile(testpath, 'cached_test_data.mat');
+offset = 22*121-1;
+data_freq = 2.357; %Frequency of test data signal in GHz
+test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 else
@@ -39,6 +37,7 @@ else
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
 
+% num_files = 121;
 
 % %% Plot Antenna Patterns
 % for antenna_ind=1:6
@@ -237,8 +236,6 @@ figure(1)
 sgtitle(sprintf('Azimuth Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 1), 'o-')
-hold on
-plot(-180:5:180, 'o-')
 title('No Interpolation')
 xlabel('Frame')
 ylabel('Azimuth Angle')
@@ -246,8 +243,6 @@ grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 1), 'o-')
-hold on
-plot(-180:5:180, 'o-')
 title('Interpolation')
 xlabel('Frame')
 ylabel('Azimuth Angle')
@@ -260,8 +255,6 @@ figure(2)
 sgtitle(sprintf('Elevation Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 2), 'o-')
-hold on
-plot(angle*ones(1, num_files), 'o-')
 title('No Interpolation')
 xlabel('Frame')
 ylabel('Elevation Angle')
@@ -269,8 +262,6 @@ grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 2), 'o-')
-hold on
-plot(angle*ones(1, num_files), 'o-')
 title('Interpolation')
 xlabel('Frame')
 ylabel('Elevation Angle')
@@ -278,34 +269,13 @@ grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
-gnd_truth_matrix(:, 1) = (-180:5:180)';
-gnd_truth_matrix(:, 2) = angle*ones(1, num_files);
-AF_error = mod(AF_results-gnd_truth_matrix+180,360)-180;
-AF_ITP_error = mod(AF_ITP_results-gnd_truth_matrix+180,360)-180;
-
-
-figure(3)
-sgtitle(sprintf('Angle Finding Error'));
-subplot(1, 2, 1)
-plot(1:num_files, AF_ITP_error(:, 1))
-xlabel('File')
-ylabel('Interpolated Error (deg)')
-title('Azimuth Interpolated Error')
-grid on
-subplot(1, 2, 2)
-plot(1:num_files, AF_ITP_error(:, 2))
-xlabel('File')
-ylabel('Interpolated Error (deg)')
-title('Elevation Interpolated Error')
-grid on
-set(gcf, 'Position', [100, 100, 1400, 700]);
 
 figure(4)
 plot(numgoodframes)
 grid on
 xlabel('File #')
-ylabel('Frames with Strong Drone Signal')
-title('Number of Frames with Drone Signal')
+ylabel('Frames with Strong Signal')
+title('Number of Frames with Signal')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
@@ -319,7 +289,7 @@ end
 
 xlabel('Azimuth Angle (deg)')
 ylabel('Elevation Angle (deg)')
-title('Drone Path')
+title('Signal Path')
 grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
@@ -331,7 +301,7 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 %% Save Figures
 if save_figs
-    folderName = [num2str(frequency),'_MHz'];
+    folderName = [num2str(data_freq*1000),'_MHz'];
     newFolderPath = fullfile(testpath, folderName);
     
     if ~exist(newFolderPath, 'dir')
@@ -349,6 +319,17 @@ end
 
 
 
+
+
+
+truth = (-180:AZ_step:180);
+
+a = AF_ITP_results(:, 1).' - truth;
+
+idx = find(abs(a) < 10);
+
+a_good = a(idx);
+truth_good = truth(idx);
 
 
 

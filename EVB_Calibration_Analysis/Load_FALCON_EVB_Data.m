@@ -1,4 +1,4 @@
-function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, numEL, offset)
+function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, numEL, offset, data_freq)
 % Load_FALCON_EVB_Data loads and processes binary EVB data into magnitude, phase, and complex values.
 %
 % Inputs:
@@ -14,6 +14,13 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
     magnitude = zeros(6, numAZ, numEL);
     phase = zeros(6, numAZ, numEL);
     complex_values = zeros(6, numAZ, numEL);
+    fre_sample=2.94912e9/12;
+    fre=[0:1023]/1024*fre_sample;
+    a = fre/1e9+2.277;
+    n = length(fre);
+    a = [a(n/2+1:end),a(1:n/2)];
+    a = a-data_freq;
+    [~, I] = min(abs(a));
 
     for i = 1:numEL
         for k = 1:numAZ
@@ -35,7 +42,7 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
 
             
             
-            for frame_ind=1:1024
+            for frame_ind=1024
                 % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
                 freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
                 freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
@@ -44,10 +51,10 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
                 freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
                 freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
                 freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
-                
-                
-                [~,I]=max(abs(freD));
-                I=234; %2.456 GHz
+
+
+                % [~,I]=max(abs(freD));
+                % I=234; %2.456 GHz
                 % Phase Difference
                 phase_5(frame_ind)=angle(freB(I)/freE(I))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
                 phase_4(frame_ind)=angle(freC(I)/freE(I))/pi*180; %EVB 3 vs 5 i.e phase difference of antenna 4 relative to antenna 1
