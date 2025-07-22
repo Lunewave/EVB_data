@@ -4,7 +4,7 @@ save_figs = 1;
 frequency = 2456; %MHz
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
@@ -27,7 +27,7 @@ else
     save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
-offset = 22*121-1;
+offset = 0;
 data_freq = 2.357; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
@@ -36,8 +36,6 @@ else
     [Test_Mag, Test_Phase, Test_Complex, num_files, numgoodframes] = Load_FALCON_EVB_LiveData(testpath, offset, data_freq);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
-
-% num_files = 121;
 
 % %% Plot Antenna Patterns
 % for antenna_ind=1:6
@@ -322,14 +320,14 @@ end
 
 
 
-truth = (-180:AZ_step:180);
-
-a = AF_ITP_results(:, 1).' - truth;
-
-idx = find(abs(a) < 10);
-
-a_good = a(idx);
-truth_good = truth(idx);
+% truth = (-180:AZ_step:180);
+% 
+% a = AF_ITP_results(:, 1).' - truth;
+% 
+% idx = find(abs(a) < 10);
+% 
+% a_good = a(idx);
+% truth_good = truth(idx);
 
 
 
