@@ -8,13 +8,19 @@ numAZ = length(AZ_data);
 EL_data = EL_start:EL_step:EL_end;
 numEL = length(EL_data);
 offset = 0;
-
+data_freq = 2.357;
 path = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
 
 magnitude = zeros(6, numAZ, numEL);
 phase = zeros(6, numAZ, numEL);
 complex_values = zeros(6, numAZ, numEL);
-percent_table = zeros(numAZ, numEL);
+fre_sample=2.94912e9/12;
+fre=[0:1023]/1024*fre_sample;
+a = fre/1e9+2.277;
+n = length(fre);
+a = [a(n/2+1:end),a(1:n/2)];
+a = a-data_freq;
+[~, I] = min(abs(a));
 
 for i = 1:numEL
     for k = 1:numAZ
@@ -38,7 +44,8 @@ for i = 1:numEL
         frame_valid = zeros(1, 512);  % 0 or 1 for each frame
         threshold_dB = 65;
 
-        for frame_ind=1:512
+        passed = 0;
+        for frame_ind=1:1024
             % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
             freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
             freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
@@ -46,26 +53,17 @@ for i = 1:numEL
             freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5)); %CH5
             freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
             freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
-            freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
-            % Get dB values at index I = 844
-            [~,I]=max(abs(freD));
-            I=844; %2.356 GHz
-            dB_vals = [
-                mag2db(abs(freB(I))),  % Antenna 5
-                mag2db(abs(freC(I))),  % Antenna 4
-                mag2db(abs(freD(I))),  % Antenna 6
-                mag2db(abs(freE(I))),  % Antenna 1 (ref)
-                mag2db(abs(freF(I))),  % Antenna 2
-                mag2db(abs(freG(I)))   % Antenna 3
-            ];
+            % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
             
-            % Check if all antennas exceed the threshold
-            if all(dB_vals > threshold_dB)
-                frame_valid(frame_ind) = 1;
-            end
+            
+            % Magnitude
+            a5(frame_ind) = mag2db(abs(freB(I)));
+            a4(frame_ind) = mag2db(abs(freC(I)));
+            a1(frame_ind) = mag2db(abs(freE(I)));
+            a2(frame_ind) = mag2db(abs(freF(I)));
+            a3(frame_ind) = mag2db(abs(freG(I)));
+            a6(frame_ind) = mag2db(abs(freD(I)));
 
-            
-           
 
             % Phase Difference
             phase_5(frame_ind)=angle(freB(I)/freE(I))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
@@ -75,26 +73,35 @@ for i = 1:numEL
             phase_3(frame_ind)=angle(freG(I)/freE(I))/pi*180; %EVB 7 vs 5 i.e phase difference of antenna 3 relative to antenna 1
             phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
 
-            % Magnitude
-            c5(frame_ind) = mag2db(abs(freB(I)));
-            c4(frame_ind) = mag2db(abs(freC(I)));
-            c1(frame_ind) = mag2db(abs(freE(I)));
-            c2(frame_ind) = mag2db(abs(freF(I)));
-            c3(frame_ind) = mag2db(abs(freG(I)));
-            % if mag2db(abs(freD(I)))>=mag2db(abs(freH(I)))
-            c6(frame_ind) = mag2db(abs(freD(I)));
-            % else
-            %     c6(frame_ind) = mag2db(abs(freH(I)));
-            % end
+
+            signal_threshold = 60;
+            
+            if a1(frame_ind) < signal_threshold || ...
+               a2(frame_ind) < signal_threshold || ...
+               a3(frame_ind) < signal_threshold || ...
+               a4(frame_ind) < signal_threshold || ...
+               a5(frame_ind) < signal_threshold || ...
+               a6(frame_ind) < signal_threshold
+            
+                a1(frame_ind) = NaN;
+                a2(frame_ind) = NaN;
+                a3(frame_ind) = NaN;
+                a4(frame_ind) = NaN;
+                a5(frame_ind) = NaN;
+                a6(frame_ind) = NaN;
+            
+                phase_1(frame_ind) = NaN;
+                phase_2(frame_ind) = NaN;
+                phase_3(frame_ind) = NaN;
+                phase_4(frame_ind) = NaN;
+                phase_5(frame_ind) = NaN;
+                phase_6(frame_ind) = NaN;
+            else
+                passed = passed + 1;
+            end
+
         end
-        percent_valid = 100 * sum(frame_valid) / length(frame_valid);
-        fprintf('Percentage of valid frames: %.2f%%\n', percent_valid);
-        percent_table(k, i) = percent_valid;
-
-
-
-
-
+        frames_passed(i) = passed;
         P_diff1=(mod(phase_1+180,360)-180).';
         P_diff2=(mod(phase_2+180,360)-180).';
         P_diff3=(mod(phase_3+180,360)-180).';
@@ -102,8 +109,11 @@ for i = 1:numEL
         P_diff5=(mod(phase_5+180,360)-180).';
         P_diff6=(mod(phase_6+180,360)-180).';
 
-        phase(:,k, i)=[median(P_diff1) median(P_diff2) median(P_diff3) median(P_diff4) median(P_diff5) median(P_diff6)];
-        magnitude(:, k, i) = [median(c1) median(c2) median(c3) median(c4) median(c5) median(c6)];
+
+
+
+        phase(:, k, i)=[median(P_diff1, 'omitnan') median(P_diff2, 'omitnan') median(P_diff3, 'omitnan') median(P_diff4, 'omitnan') median(P_diff5, 'omitnan') median(P_diff6, 'omitnan')];
+        magnitude(:, k, i) = [median(a1, 'omitnan') median(a2, 'omitnan') median(a3, 'omitnan') median(a4, 'omitnan') median(a5, 'omitnan') median(a6, 'omitnan')];
         for antenna = 1:6
             complex_values(antenna, k, i) = db2mag(magnitude(antenna, k, i))*exp(j.*phase(antenna, k, i)/180*pi);
         end
