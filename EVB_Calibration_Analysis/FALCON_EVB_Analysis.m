@@ -38,7 +38,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 2;
-data_freq = 2357; %MHz
+data_freq = 2456; %MHz
 test_cache = fullfile(testpath, [num2str(data_freq/1000) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');

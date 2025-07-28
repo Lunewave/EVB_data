@@ -1,14 +1,14 @@
 close all; clear all; clc;
 
 save_figs = 1;
-frequency = 2360; %MHz
+frequency = 2456; %MHz
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
-EL_start = 66; EL_end = -6; EL_step = -3;
+EL_start = 66; EL_end = 0; EL_step = -3;
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
 EL_data = EL_start:EL_step:EL_end;
@@ -17,7 +17,7 @@ numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolatio
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
 lib_location = 'Calibration Library';
 noise_level_cal = 45;
-libpath = 'U:\Falcon_Project\20250725_MaranaTest_AZ360_EL66_-6_Step3_withLens_withEVB_2.36_CalibrationLibrary';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
 offset = 0;
 lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
@@ -37,7 +37,102 @@ else
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
 
-num_files = 121;
+% %% Plot Antenna Patterns
+% for antenna_ind=1:6
+%     noise_level_cal = 45;
+%     noise_level_test = 45;
+% 
+%     shifts1 = [0 0 0 0 0 0];
+%     shifts2 = [0 0 0 0 0 0];
+% 
+%     shifts11 = [0 0 0 0 0 0];
+%     shifts12 = [0 0 0 0 0 0];
+%     if AZ_steps>1        
+%         LibMag = squeeze(Lib_Mag(antenna_ind,:, end));
+%         TestMag = squeeze(Test_Mag(antenna_ind,:, end));
+%         % Convert to linear power scale
+%         LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+%         TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+% 
+%         % Compute mean in linear scale
+%         aSNRLib  = 10 * log10(mean(LibPowerLinear));
+%         aSNRTest = 10 * log10(mean(TestPowerLinear));
+% 
+% 
+%         figure(100+antenna_ind)
+%         subplot(1,2,1)
+%         plot(AZ_data, LibMag);
+%         grid on; hold on;
+%         plot(-180:5:180, TestMag);
+%         xlabel('Azimuth Angle (deg)'); ylabel('Magnitude (dB)');
+%         title(['Antenna ' int2str(antenna_ind) ' magnitude EL = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         snr_text = sprintf(['Average ' lib_location ' Azimuth SNR: %.2f dB     ' ...
+%                             'Average ' test_location ' Azimuth SNR: %.2f dB'], aSNRLib, aSNRTest);
+% 
+%         uicontrol('Style', 'text', ...
+%                   'String', snr_text, ...
+%                   'Units', 'normalized', ...
+%                   'Position', [0, 0, 1, 0.03], ...  % bottom strip
+%                   'HorizontalAlignment', 'center', ...
+%                   'FontSize', 10, ...
+%                   'BackgroundColor', get(gcf, 'Color'), ...
+%                   'ForegroundColor', 'k', ...
+%                   'Tag', 'snr_footer');
+%         subplot(1,2,2)
+%         plot(AZ_data,unwrap(squeeze(Lib_Phase(antenna_ind, :, end)),180)+shifts1(antenna_ind));
+%         grid on;hold on;
+%         plot(-180:5:180,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
+%         xlabel('Angle (deg)');ylabel('Phase (deg)');
+%         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         set(gcf, 'Position', [100, 100, 1200, 500]);
+%     end
+% 
+%     if EL_steps>1
+% 
+%         LibMag = squeeze(Lib_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
+%         TestMag = squeeze(Test_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
+%         % Convert to linear power scale
+%         LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+%         TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+% 
+%         % Compute mean in linear scale
+%         aSNRLib  = 10 * log10(mean(LibPowerLinear));
+%         aSNRTest = 10 * log10(mean(TestPowerLinear));
+% 
+% 
+%         figure(110+antenna_ind)
+%         subplot(1,2,1)
+%         plot(EL_data, LibMag);
+%         grid on; hold on;
+%         plot(EL_data, TestMag);
+%         xlabel('Elevation Angle (deg)'); ylabel('Magnitude (dB)');
+%         title(['Antenna ' int2str(antenna_ind) ' magnitude AZ = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         snr_text = sprintf(['Average ' lib_location ' Elevation SNR: %.2f dB     ' ...
+%                             'Average ' test_location ' Elevation SNR: %.2f dB'], aSNRLib, aSNRTest);
+% 
+%         uicontrol('Style', 'text', ...
+%                   'String', snr_text, ...
+%                   'Units', 'normalized', ...
+%                   'Position', [0, 0, 1, 0.03], ...  % bottom strip
+%                   'HorizontalAlignment', 'center', ...
+%                   'FontSize', 10, ...
+%                   'BackgroundColor', get(gcf, 'Color'), ...
+%                   'ForegroundColor', 'k', ...
+%                   'Tag', 'snr_footer');
+%         subplot(1,2,2)
+%         plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
+%         grid on;hold on;
+%         plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
+%         xlabel('Angle (deg)');ylabel('Phase (deg)');
+%         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         set(gcf, 'Position', [100, 100, 1200, 500]);
+%     end
+% end
+
 
 %% Angle Finding with Interpolation
 %%%%%%%%%%%%  DF code  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -115,6 +210,7 @@ end
 
 AF_results=mod(AF_results+180,360)-180;
 AF_ITP_results=mod(AF_ITP_results+180,360)-180;
+
 
 
 figure(1000)
@@ -215,7 +311,6 @@ if save_figs
     saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
     saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
 end
-
 
 
 

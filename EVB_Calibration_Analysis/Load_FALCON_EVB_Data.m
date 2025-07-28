@@ -24,11 +24,12 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
 
     for i = 1:numEL
         for k = 1:numAZ
-            num2str((i-1)*numAZ + k-1,'%04d')
-            fileID = fopen([path '\' num2str((i-1)*numAZ + k-1 + offset,'%04d') '.BIN'], 'r', 'ieee-le');
+            file_number = (i-1)*numAZ + k-1 + offset
+            filename = [path '\' num2str(file_number,'%04d') '.BIN']
+            fileID = fopen(filename, 'r', 'ieee-le');
             C = fread(fileID, Inf, 'int16');fclose(fileID);
             C0 = reshape(C,[8,length(C)/8]).';
-            
+
             % C1= C0 (1:8:end,:).'; C_all(:,1)=C1(:);
             C2= C0 (2:8:end,:).'; C_all(:,2)=C2(:);
             C3= C0 (3:8:end,:).'; C_all(:,3)=C3(:);
@@ -37,12 +38,13 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
             C6= C0 (6:8:end,:).'; C_all(:,6)=C6(:);
             C7= C0 (7:8:end,:).'; C_all(:,7)=C7(:);
             C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:); 
-            
+
             C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+
 
             
             
-            for frame_ind=1024
+            for frame_ind=1:1024
                 % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
                 freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
                 freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
