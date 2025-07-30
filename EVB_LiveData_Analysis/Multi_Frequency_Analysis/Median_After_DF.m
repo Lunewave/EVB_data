@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = [2.3537 2.3597]; % Frequency of test data signal in GHz
+data_freq = [2.3537 2.3597] ; % Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq(1)) '-' num2str(data_freq(2)) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'freq_range');
@@ -43,8 +43,8 @@ AZ_table=AZ_data;
 EL_table=[EL_start:EL_step:EL_end];
 length_el=length(EL_table);
 length_az=length(AZ_table);
-AF_results = zeros(num_files, 1024, length(freq_range), 2);
-AF_ITP_results = zeros(num_files, 1024, length(freq_range), 2);
+AF_results = NaN(num_files, 1024, length(freq_range), 2);
+AF_ITP_results = NaN(num_files, 1024, length(freq_range), 2);
 for ifile = 1:num_files   %-140:2:140;                     % object AZ angle input   [-140:140]
     for frame = 1:1024
         disp(ifile)
@@ -53,7 +53,7 @@ for ifile = 1:num_files   %-140:2:140;                     % object AZ angle inp
     
             %Test vector
             test=squeeze(Test_Complex(:, ifile, frame, frequency)); 
-            if isnan(test)
+            if any(isnan(test))
                 AF_results(ifile,frame,frequency,:) = [NaN NaN];
                 AF_ITP_results(ifile,frame,frequency,:) = [NaN NaN];
             else
@@ -129,4 +129,40 @@ xlabel('File Number')
 ylabel('Azimuth Angle (deg)')
 grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
+
+
+
+% num_files = 27;
+% frames = 1:16:(1024-16); % frames per file
+% num_frames = length(frames);
+% 
+% % Preallocate Y for all files and frames
+% Y = zeros(num_files * num_frames, 1);
+% 
+% for f = 1:num_files
+%     % Extract your data from AF_ITP_results_freq_median for each file and frames
+%     % Replace the frequency index (3rd dim) as needed, here assumed 1
+%     Y(((f-1)*num_frames + 1):(f*num_frames)) = squeeze(AF_ITP_results_freq_median(f, frames, 2));
+% end
+% 
+% % Build X axis with fractional labels per file and frame
+% X = [];
+% for f = 1:num_files
+%     X = [X; f + frames'/1000];  % e.g. 1.001, 1.065, etc.
+% end
+% 
+% % Plot
+% figure;
+% plot(X, Y, 'o-');
+% xlabel('File.Frame Index');
+% ylabel('Your Value');
+% title('Sparse Frame Points per File');
+% 
+% % Optional: set x ticks to file indices with labels
+% xticks(1:num_files);
+% xticklabels(arrayfun(@(x) sprintf('File %d', x), 1:num_files, 'UniformOutput', false));
+% % xlim([1, num_files + 0.1]);
+% grid on;
 

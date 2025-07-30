@@ -3,11 +3,11 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-10\';
-frame = 37;
+path = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447\';
+frame = 1;
 
 DMA=1;
-num_frames = 0;
+num_frames = 25;
 
 
 for i = frame:frame+num_frames

@@ -3,7 +3,7 @@ close all; clear all; clc;
 
 %% ROTATOR LOCATION
 
-save_figs = 0;
+
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
 
@@ -310,7 +310,7 @@ plot(data.UTC_seconds - data.UTC_seconds(1), drone_az, 'Color', [0, 0, 0]);
 hold on
 plot(antenna_time - data.UTC_seconds(1), AF_ITP_results(:, 1), 'o-')
 xlabel('Seconds')
-ylabel('Azimuth Angle (degrees)')
+ylabel('Azimuth Angle (degrees')
 legend('Drone Ground Truth', 'FALCON DF Results', 'location', 'best')
 subplot(1, 2, 2)
 plot(data.UTC_seconds - data.UTC_seconds(1), drone_el, 'Color', [0, 0, 0]);
@@ -320,9 +320,4 @@ xlabel('Seconds')
 ylabel('Elevation Angle (degrees)')
 legend('Drone Ground Truth', 'FALCON DF Results', 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
-
-if save_figs
-    saveas(figure(10), fullfile(path, 'Error.jpeg'));
-    saveas(figure(11), fullfile(path, 'Full_Flight.jpeg'));
-end
 

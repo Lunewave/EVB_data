@@ -1,23 +1,23 @@
 close all; clear all; clc;
 
-save_figs = 1;
-frequency = 2360; %MHz
+save_figs = 0;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
-AZ_start = -180; AZ_end = 180; AZ_step = 3;
-EL_start = 66; EL_end = -6; EL_step = -3;
+AZ_start = 180; AZ_end = -180; AZ_step = -3;
+EL_start = 66; EL_end = 0; EL_step = -3;
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
 EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
 numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+frequency = 2456; %MHz
 lib_location = 'Calibration Library';
 noise_level_cal = 45;
-libpath = 'U:\Falcon_Project\20250725_MaranaTest_AZ360_EL66_-6_Step3_withLens_withEVB_2.36_CalibrationLibrary';
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
 offset = 0;
 lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.357; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
@@ -37,7 +37,6 @@ else
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
 
-num_files = 121;
 
 %% Angle Finding with Interpolation
 %%%%%%%%%%%%  DF code  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -113,40 +112,43 @@ for ifile= 1:num_files   %-140:2:140;                      % object AZ angle inp
 
 end
 
+% AF_results(:, 1) = AF_results(:, 1) - (-180:5:180)';
+% AF_ITP_results(:, 1) = AF_ITP_results(:, 1) - (-180:5:180)';
+
 AF_results=mod(AF_results+180,360)-180;
 AF_ITP_results=mod(AF_ITP_results+180,360)-180;
 
-
-figure(1000)
-set(gcf, 'Position',  [200, 200, 800, 600]);
-if EL_steps == 1
-    plot(AZ_data, mag2db(abs(coe(:,1:end).')))
-    xlabel('AZ');ylabel('Correlation Mag')
-elseif AZ_steps == 1
-    plot(EL_data, mag2db(abs(coe(:,1:end).')))
-    xlabel('EL');ylabel('Correlation Mag')
-    ylim([-2 -0.25])
-else
-    imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
-    caxis([-8 0]);
-    colorbar;
-    xlabel('AZ');ylabel('EL');
-end
-title(['Frame:  ' num2str(ifile)]);
+% 
+% figure(1000)
+% set(gcf, 'Position',  [200, 200, 800, 600]);
+% if EL_steps == 1
+%     plot(AZ_data, mag2db(abs(coe(:,1:end).')))
+%     xlabel('AZ');ylabel('Correlation Mag')
+% elseif AZ_steps == 1
+%     plot(EL_data, mag2db(abs(coe(:,1:end).')))
+%     xlabel('EL');ylabel('Correlation Mag')
+%     ylim([-2 -0.25])
+% else
+%     imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
+%     caxis([-8 0]);
+%     colorbar;
+%     xlabel('AZ');ylabel('EL');
+% end
+% title(['Frame:  ' num2str(ifile)]);
 %% Plot Figures
 figure(1)
 sgtitle(sprintf('Azimuth Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 1), 'o-')
 title('No Interpolation')
-xlabel('Frame')
+xlabel('File')
 ylabel('Azimuth Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 1), 'o-')
 title('Interpolation')
-xlabel('Frame')
+xlabel('File')
 ylabel('Azimuth Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
@@ -158,14 +160,14 @@ sgtitle(sprintf('Elevation Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 2), 'o-')
 title('No Interpolation')
-xlabel('Frame')
+xlabel('File')
 ylabel('Elevation Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 2), 'o-')
 title('Interpolation')
-xlabel('Frame')
+xlabel('File')
 ylabel('Elevation Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
@@ -184,16 +186,41 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 figure(5)
 scatter(AF_ITP_results(:, 1), AF_ITP_results(:, 2), 'filled')
 hold on
+for i = 1:num_files - 1
+    x1 = AF_ITP_results(i, 1);
+    y1 = AF_ITP_results(i, 2);
+    x2 = AF_ITP_results(i+1, 1);
+    y2 = AF_ITP_results(i+1, 2);
+    line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
+    vec = [x2 - x1, y2 - y1];
+    vec = vec / norm(vec);  % Normalize
+    perp = [-vec(2), vec(1)];  % Perpendicular
+    L = 0.4;  % Length of arrowhead
+    W = 0.2;  % Width of arrowhead
+    base = [x2, y2] - L * vec;
+    arrow_x = [x2, base(1) + W*perp(1), base(1) - W*perp(1)];
+    arrow_y = [y2, base(2) + W*perp(2), base(2) - W*perp(2)];
+    patch(arrow_x, arrow_y, 'r', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+end
 for i = 1:num_files
     text(AF_ITP_results(i, 1), AF_ITP_results(i, 2), num2str(i), ...
         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
 end
-
 xlabel('Azimuth Angle (deg)')
 ylabel('Elevation Angle (deg)')
-title('Signal Path')
+title('Signal Path with Transparent Arrows')
 grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
+
+figure(6)
+plot(Test_Mag', 'o-')
+ylabel('Magnitude (dB)')
+xlabel('File')
+title('Signal Strength vs File')
+legend('Antenna 1', 'Antenna 2', 'Antenna 3', 'Antenna 4', 'Antenna 5', 'Antenna 6', 'location', 'best')
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
 
 
 
@@ -213,8 +240,14 @@ if save_figs
     end
     saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
     saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
+    saveas(figure(4), fullfile(newFolderPath, 'Good_Frames.jpeg'));
     saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
+    saveas(figure(6), fullfile(newFolderPath, 'Signal_Strength.jpeg'));
+
+    parentFolder = fileparts(newFolderPath); % get parent folder
+    save(fullfile(parentFolder, 'AF_ITP_results.mat'), 'AF_ITP_results');
 end
+
 
 
 

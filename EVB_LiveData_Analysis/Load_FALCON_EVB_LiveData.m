@@ -74,7 +74,7 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
             phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
 
 
-            signal_threshold = 65;
+            signal_threshold = 50;
             
             if a1(frame_ind) < signal_threshold || ...
                a2(frame_ind) < signal_threshold || ...
