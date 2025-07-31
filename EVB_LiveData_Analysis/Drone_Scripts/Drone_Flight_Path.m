@@ -4,6 +4,7 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 0;
+data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
 
@@ -11,6 +12,12 @@ ref_lon = -111.21116;     % West is negative
 
 %% Load Data
 [csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
+
+
+test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
+load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
+
+
 load([path 'MyTimestamps.mat'])
 temp = load([path 'MyTimestamps.mat']);
 fn = fieldnames(temp);
@@ -45,7 +52,6 @@ data.y = data.y(good_idx);
 data.z = data.z(good_idx);
 data.UTC_seconds = data.UTC_seconds(good_idx);
 
-
 angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
 AF_ITP_results(:, 1) = AF_ITP_results(:, 1) + angle_offset;
 
@@ -77,7 +83,7 @@ zlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y
 % Create subplots
 subplot(1,2,1);
 axXY = gca;
-xlabel('X'); ylabel('Y');
+xlabel('X (m)'); ylabel('Y (m)');
 title('XY View');
 grid on; axis equal;
 xlim(xlimVals); ylim(ylimVals);
@@ -86,7 +92,7 @@ surf(axXY, sX, sY, sZ+antenna_height);
 
 subplot(1,2,2);
 axXZ = gca;
-xlabel('X'); ylabel('Z');
+xlabel('X (m)'); ylabel('Z (m)');
 title('XZ View');
 grid on; axis equal;
 xlim(xlimVals); ylim(zlimVals);
@@ -276,15 +282,17 @@ fprintf('Video saved to: %s\n', videoName);
 
 drone_az = rad2deg(atan2(data.y, data.x));
 drone_el = rad2deg(atan2(data.z, sqrt(data.x.^2 + data.y.^2)));
+drone_r = sqrt(data.x.^2 + data.y.^2 + data.z.^2);
 
 
 for ifile = 1:length(AF_ITP_results(:, 1))
     [a, I] = min(abs(antenna_time(ifile) - data.UTC_seconds));
     if a<1 %Check to see if the drone time is close enough to the antenna time for good error.
         error(ifile, :) = [AF_ITP_results(ifile, 1) - drone_az(I), AF_ITP_results(ifile, 2) - drone_el(I)];
-
+        dist(ifile) = drone_r(I);
     else
         error(ifile, :) = [NaN NaN];
+        dist(ifile) = [NaN];
 
     end
 end

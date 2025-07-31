@@ -1,9 +1,9 @@
 close all; clear all; clc;
 
-save_figs = 1;
+save_figs = 0;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
+testpath = 'U:\Falcon_Project\20250729_MaranaTest_DroneFigure8_32.45130N_111.21116W_2.447GHz_setAngleOffset-5';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
@@ -22,9 +22,6 @@ offset = 0;
 lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
     load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
-    % Lib_Mag = Lib_Mag(:, end:-1:1, :);
-    % Lib_Phase = Lib_Mag(:, end:-1:1, :);
-    % Lib_Complex = Lib_Mag(:, end:-1:1, :);
 else
     [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset);
     save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
@@ -243,6 +240,7 @@ if save_figs
     end
     saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
     saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
+    saveas(figure(4), fullfile(newFolderPath, 'Good_Frames.jpeg'));
     saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
     saveas(figure(6), fullfile(newFolderPath, 'Signal_Strength.jpeg'));
 
