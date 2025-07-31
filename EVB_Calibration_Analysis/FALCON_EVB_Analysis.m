@@ -3,9 +3,8 @@ close all; clear all; clc;
 AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
 save_figs = 0;
-frequency = 2456; %MHz
 lib_location = 'Calibration Library';
-test_location = 'Office Test';
+test_location = 'Marana Test';
 
 noise_level_cal = 45;
 noise_level_test = 45;
@@ -14,11 +13,11 @@ shifts1 = [0 0 0 0 0 0];
 shifts2 = [0 0 0 0 0 0];
 
 shifts11 = [0 0 0 0 0 0];
-shifts12 = [0 -360 0 0 0 0];
+shifts12 = [0 0 0 0 0 0];
 
 
 libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
-testpath = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_LibraryTest';
+testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -27,20 +26,24 @@ EL_steps = length(EL_data);
 numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-lib_cache = fullfile(libpath, 'cached_library_data.mat');
+frequency = 2456; %MHz
+lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
-    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex', 'Lib_Metadata');
 else
-    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset);
-    save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset, frequency/1000);
+    Lib_Metadata = struct(); Lib_Metadata.Azimuth = [AZ_start AZ_step AZ_end]; Lib_Metadata.Elevation = [EL_start EL_step EL_end]; 
+    Lib_Metadata.Frequency = '2.456 GHz'; Lib_Metadata.Dimensions = [6 AZ_steps EL_steps]; Lib_Metadata.DimensionString = {'Antennas', 'Azimuth', 'Elevation'};
+    save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex', 'Lib_Metadata');
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
-offset = 0;
-test_cache = fullfile(testpath, 'cached_test_data.mat');
+offset = 2;
+data_freq = 2456; %MHz
+test_cache = fullfile(testpath, [num2str(data_freq/1000) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 else
-    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps, offset);
+    [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps, offset, data_freq/1000);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 end
 
@@ -267,7 +270,7 @@ EL_err_max_ITP=max(abs(tmp(:)));
 
 % ['AZ error average=' num2str(AZ_err_ave) ' deg;   AZ error std=' num2str(AZ_err_std) ' deg;']
 % ['EL error average=' num2str(EL_err_ave) ' deg;   EL error std=' num2str(EL_err_std) ' deg;']
-step_error = 15;
+step_error = 3;
 
 figure(10)
 subplot(1, 2, 1)
@@ -463,7 +466,7 @@ end
 
 %% Save Figures
 if save_figs
-    folderName = [num2str(frequency),'_MHz'];
+    folderName = [num2str(data_freq),'_MHz'];
     newFolderPath = fullfile(testpath, folderName);
     
     if ~exist(newFolderPath, 'dir')
@@ -496,12 +499,3 @@ if save_figs
     
     % close all
 end
-
-
-
-
-
-
-
-
-

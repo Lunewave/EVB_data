@@ -8,7 +8,7 @@ AZ_FOV = 360;
 az_steps = AZ_FOV/step + 1;
 EL_FOV = 66;
 el_steps = EL_FOV/step + 1;
-path = 'U:\Falcon_Project\20250617_LWOfficeTest_AZ30_EL0_Step3_withLens_withEVB_noise\';
+path = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary\';
 az_angle = 0;        el_angle = 0;
 
 
@@ -113,6 +113,7 @@ plot(fre/1e9+2.277, [mag2db(abs(freD(n/2+1:end))); mag2db(abs(freD(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freE(n/2+1:end))); mag2db(abs(freE(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freF(n/2+1:end))); mag2db(abs(freF(1:n/2)))]);
 plot(fre/1e9+2.277, [mag2db(abs(freG(n/2+1:end))); mag2db(abs(freG(1:n/2)))]);
+yline(65, '--r', 'Threshold');
 xlabel('Frequency (GHz)')
 ylabel('Magnitude (dB)')
 title(['FFT at:   AZ ' num2str(az_angle) 'deg ;    EL ' num2str(el_angle) ' deg']);

@@ -1,0 +1,121 @@
+function [magnitude, phase, complex_values, num_files, freq_range] = Load_FALCON_EVB_LiveData(path,offset, data_freq)
+% Load_FALCON_EVB_Data loads and processes binary EVB data into magnitude, phase, and complex values.
+%
+% Inputs:
+%   path   - Folder path to .BIN files
+
+%
+% Outputs:
+%   magnitude      - [6 x #of bin files] matrix of dB values
+%   phase          - [6 x #of bin files] matrix of phase in degrees
+%   complex_values - [6 x #of bin files] matrix of complex values
+    min_freq = data_freq(1);
+    max_freq = data_freq(2);
+    fre_sample=2.94912e9/12;
+    fre=[0:1023]/1024*fre_sample;
+    a = fre/1e9+2.277;
+    n = length(fre);
+    a = [a(n/2+1:end),a(1:n/2)];
+    a1 = a-min_freq;
+    [~, Imin] = min(abs(a1));
+    a2 = a-max_freq;
+    [~, Imax] = min(abs(a2));
+    freq_range = a(Imin:Imax);
+    num_freqs =  length(freq_range);
+
+
+    bin_files = dir(fullfile(path, '*.BIN'));
+    num_files = numel(bin_files)-1;
+    magnitude = zeros(6, num_files, 1024, num_freqs); % 6xnum_files
+    phase = zeros(6, num_files, 1024, num_freqs);
+    complex_values = zeros(6, num_files, 1024, num_freqs);
+
+
+
+
+    for i = 1:num_files %skip first file, bad frame
+        num2str(i+offset,'%04d')
+        fileID = fopen([path '\' num2str(i+offset,'%04d') '.BIN'], 'r', 'ieee-le');
+        C = fread(fileID, Inf, 'int16');fclose(fileID);
+        C0 = reshape(C,[8,length(C)/8]).';
+        L_C0=length(C0);
+        
+        C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
+        C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
+        C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
+        C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
+        C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
+        C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
+        C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
+        C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:); 
+        
+        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+
+        
+        for frame_ind=1:1024
+            % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
+            freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
+            freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
+            freD=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),4)); %CH4
+            freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5)); %CH5
+            freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
+            freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
+            % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
+            
+            for I = 1:num_freqs
+                % Magnitude
+                a5 = mag2db(abs(freB(I+Imin-1)));
+                a4 = mag2db(abs(freC(I+Imin-1)));
+                a1 = mag2db(abs(freE(I+Imin-1)));
+                a2 = mag2db(abs(freF(I+Imin-1)));
+                a3 = mag2db(abs(freG(I+Imin-1)));
+                a6 = mag2db(abs(freD(I+Imin-1)));
+    
+    
+                % Phase Difference
+                phase_5=angle(freB(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 2 vs 5 i.e phase difference of antenna 5 relative to antenna 1
+                phase_4=angle(freC(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 3 vs 5 i.e phase difference of antenna 4 relative to antenna 1
+                phase_1=angle(freE(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 5 vs 5 i.e phase difference of antenna 1 relative to antenna 1
+                phase_2=angle(freF(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 6 vs 5 i.e phase difference of antenna 2 relative to antenna 1
+                phase_3=angle(freG(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 7 vs 5 i.e phase difference of antenna 3 relative to antenna 1
+                phase_6=angle(freD(I+Imin-1)/freE(I+Imin-1))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
+    
+    
+                signal_threshold = 65;
+                
+                if a1 < signal_threshold || ...
+                   a2 < signal_threshold || ...
+                   a3 < signal_threshold || ...
+                   a4 < signal_threshold || ...
+                   a5 < signal_threshold || ...
+                   a6 < signal_threshold
+                
+                    a1 = NaN;
+                    a2 = NaN;
+                    a3 = NaN;
+                    a4 = NaN;
+                    a5 = NaN;
+                    a6 = NaN;
+                
+                    phase_1 = NaN;
+                    phase_2 = NaN;
+                    phase_3 = NaN;
+                    phase_4 = NaN;
+                    phase_5 = NaN;
+                    phase_6 = NaN;
+                end
+                P_diff1=(mod(phase_1+180,360)-180).';
+                P_diff2=(mod(phase_2+180,360)-180).';
+                P_diff3=(mod(phase_3+180,360)-180).';
+                P_diff4=(mod(phase_4+180,360)-180).';
+                P_diff5=(mod(phase_5+180,360)-180).';
+                P_diff6=(mod(phase_6+180,360)-180).';
+                phase(:, i, frame_ind, I)=[P_diff1 P_diff2 P_diff3 P_diff4 P_diff5 P_diff6];
+                magnitude(:, i, frame_ind, I) = [a1 a2 a3 a4 a5 a6];
+                for antenna = 1:6
+                    complex_values(antenna, i, frame_ind, I) = db2mag(magnitude(antenna, i, frame_ind, I))*exp(j.*phase(antenna, i, frame_ind, I)/180*pi);
+                end
+            end
+        end
+    end
+end

@@ -13,7 +13,7 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
     num_files = numel(bin_files)-1;
 
 
-    magnitude = zeros(6, num_files);
+    magnitude = zeros(6, num_files); % 6xnum_files
     phase = zeros(6, num_files);
     complex_values = zeros(6, num_files);
     frames_passed = zeros(1, num_files);
@@ -74,7 +74,7 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
             phase_6(frame_ind)=angle(freD(I)/freE(I))/pi*180; %EVB 4 vs 5 i.e phase difference of antenna 6 relative to antenna 1
 
 
-            signal_threshold = 60;
+            signal_threshold = 50;
             
             if a1(frame_ind) < signal_threshold || ...
                a2(frame_ind) < signal_threshold || ...

@@ -1,12 +1,13 @@
 close all; clear all; clc;
 
-save_figs = 0;
+save_figs = 1;
+frequency = 2456; %MHz
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
+testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
-AZ_start = 180; AZ_end = -180; AZ_step = -3;
+AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -14,7 +15,6 @@ EL_data = EL_start:EL_step:EL_end;
 EL_steps = length(EL_data);
 numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
-frequency = 2456; %MHz
 lib_location = 'Calibration Library';
 noise_level_cal = 45;
 libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.447; %Frequency of test data signal in GHz
+data_freq = 2.357; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
@@ -36,6 +36,102 @@ else
     [Test_Mag, Test_Phase, Test_Complex, num_files, numgoodframes] = Load_FALCON_EVB_LiveData(testpath, offset, data_freq);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
+
+% %% Plot Antenna Patterns
+% for antenna_ind=1:6
+%     noise_level_cal = 45;
+%     noise_level_test = 45;
+% 
+%     shifts1 = [0 0 0 0 0 0];
+%     shifts2 = [0 0 0 0 0 0];
+% 
+%     shifts11 = [0 0 0 0 0 0];
+%     shifts12 = [0 0 0 0 0 0];
+%     if AZ_steps>1        
+%         LibMag = squeeze(Lib_Mag(antenna_ind,:, end));
+%         TestMag = squeeze(Test_Mag(antenna_ind,:, end));
+%         % Convert to linear power scale
+%         LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+%         TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+% 
+%         % Compute mean in linear scale
+%         aSNRLib  = 10 * log10(mean(LibPowerLinear));
+%         aSNRTest = 10 * log10(mean(TestPowerLinear));
+% 
+% 
+%         figure(100+antenna_ind)
+%         subplot(1,2,1)
+%         plot(AZ_data, LibMag);
+%         grid on; hold on;
+%         plot(-180:5:180, TestMag);
+%         xlabel('Azimuth Angle (deg)'); ylabel('Magnitude (dB)');
+%         title(['Antenna ' int2str(antenna_ind) ' magnitude EL = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         snr_text = sprintf(['Average ' lib_location ' Azimuth SNR: %.2f dB     ' ...
+%                             'Average ' test_location ' Azimuth SNR: %.2f dB'], aSNRLib, aSNRTest);
+% 
+%         uicontrol('Style', 'text', ...
+%                   'String', snr_text, ...
+%                   'Units', 'normalized', ...
+%                   'Position', [0, 0, 1, 0.03], ...  % bottom strip
+%                   'HorizontalAlignment', 'center', ...
+%                   'FontSize', 10, ...
+%                   'BackgroundColor', get(gcf, 'Color'), ...
+%                   'ForegroundColor', 'k', ...
+%                   'Tag', 'snr_footer');
+%         subplot(1,2,2)
+%         plot(AZ_data,unwrap(squeeze(Lib_Phase(antenna_ind, :, end)),180)+shifts1(antenna_ind));
+%         grid on;hold on;
+%         plot(-180:5:180,unwrap(squeeze(Test_Phase(antenna_ind, :, end)),180)+shifts2(antenna_ind));
+%         xlabel('Angle (deg)');ylabel('Phase (deg)');
+%         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         set(gcf, 'Position', [100, 100, 1200, 500]);
+%     end
+% 
+%     if EL_steps>1
+% 
+%         LibMag = squeeze(Lib_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
+%         TestMag = squeeze(Test_Mag(antenna_ind,(length(AZ_data)+1)/2, :));
+%         % Convert to linear power scale
+%         LibPowerLinear  = 10.^((LibMag - noise_level_cal)/10);
+%         TestPowerLinear = 10.^((TestMag - noise_level_test)/10);
+% 
+%         % Compute mean in linear scale
+%         aSNRLib  = 10 * log10(mean(LibPowerLinear));
+%         aSNRTest = 10 * log10(mean(TestPowerLinear));
+% 
+% 
+%         figure(110+antenna_ind)
+%         subplot(1,2,1)
+%         plot(EL_data, LibMag);
+%         grid on; hold on;
+%         plot(EL_data, TestMag);
+%         xlabel('Elevation Angle (deg)'); ylabel('Magnitude (dB)');
+%         title(['Antenna ' int2str(antenna_ind) ' magnitude AZ = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         snr_text = sprintf(['Average ' lib_location ' Elevation SNR: %.2f dB     ' ...
+%                             'Average ' test_location ' Elevation SNR: %.2f dB'], aSNRLib, aSNRTest);
+% 
+%         uicontrol('Style', 'text', ...
+%                   'String', snr_text, ...
+%                   'Units', 'normalized', ...
+%                   'Position', [0, 0, 1, 0.03], ...  % bottom strip
+%                   'HorizontalAlignment', 'center', ...
+%                   'FontSize', 10, ...
+%                   'BackgroundColor', get(gcf, 'Color'), ...
+%                   'ForegroundColor', 'k', ...
+%                   'Tag', 'snr_footer');
+%         subplot(1,2,2)
+%         plot(EL_data,unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind));
+%         grid on;hold on;
+%         plot(EL_data,unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts12(antenna_ind));
+%         xlabel('Angle (deg)');ylabel('Phase (deg)');
+%         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
+%         legend(lib_location, test_location, 'Location', 'best');
+%         set(gcf, 'Position', [100, 100, 1200, 500]);
+%     end
+% end
 
 
 %% Angle Finding with Interpolation
@@ -112,43 +208,41 @@ for ifile= 1:num_files   %-140:2:140;                      % object AZ angle inp
 
 end
 
-% AF_results(:, 1) = AF_results(:, 1) - (-180:5:180)';
-% AF_ITP_results(:, 1) = AF_ITP_results(:, 1) - (-180:5:180)';
-
 AF_results=mod(AF_results+180,360)-180;
 AF_ITP_results=mod(AF_ITP_results+180,360)-180;
 
-% 
-% figure(1000)
-% set(gcf, 'Position',  [200, 200, 800, 600]);
-% if EL_steps == 1
-%     plot(AZ_data, mag2db(abs(coe(:,1:end).')))
-%     xlabel('AZ');ylabel('Correlation Mag')
-% elseif AZ_steps == 1
-%     plot(EL_data, mag2db(abs(coe(:,1:end).')))
-%     xlabel('EL');ylabel('Correlation Mag')
-%     ylim([-2 -0.25])
-% else
-%     imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
-%     caxis([-8 0]);
-%     colorbar;
-%     xlabel('AZ');ylabel('EL');
-% end
-% title(['Frame:  ' num2str(ifile)]);
+
+
+figure(1000)
+set(gcf, 'Position',  [200, 200, 800, 600]);
+if EL_steps == 1
+    plot(AZ_data, mag2db(abs(coe(:,1:end).')))
+    xlabel('AZ');ylabel('Correlation Mag')
+elseif AZ_steps == 1
+    plot(EL_data, mag2db(abs(coe(:,1:end).')))
+    xlabel('EL');ylabel('Correlation Mag')
+    ylim([-2 -0.25])
+else
+    imagesc(AZ_data,EL_data,mag2db(abs(coe(:,1:end).')))
+    caxis([-8 0]);
+    colorbar;
+    xlabel('AZ');ylabel('EL');
+end
+title(['Frame:  ' num2str(ifile)]);
 %% Plot Figures
 figure(1)
 sgtitle(sprintf('Azimuth Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 1), 'o-')
 title('No Interpolation')
-xlabel('File')
+xlabel('Frame')
 ylabel('Azimuth Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 1), 'o-')
 title('Interpolation')
-xlabel('File')
+xlabel('Frame')
 ylabel('Azimuth Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
@@ -160,14 +254,14 @@ sgtitle(sprintf('Elevation Results'));
 subplot(1, 2, 1)
 plot(AF_results(:, 2), 'o-')
 title('No Interpolation')
-xlabel('File')
+xlabel('Frame')
 ylabel('Elevation Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
 subplot(1, 2, 2)
 plot(AF_ITP_results(:, 2), 'o-')
 title('Interpolation')
-xlabel('File')
+xlabel('Frame')
 ylabel('Elevation Angle')
 grid on
 legend('Test Data', 'Ground Truth', 'location', 'best')
@@ -186,41 +280,16 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 figure(5)
 scatter(AF_ITP_results(:, 1), AF_ITP_results(:, 2), 'filled')
 hold on
-for i = 1:num_files - 1
-    x1 = AF_ITP_results(i, 1);
-    y1 = AF_ITP_results(i, 2);
-    x2 = AF_ITP_results(i+1, 1);
-    y2 = AF_ITP_results(i+1, 2);
-    line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
-    vec = [x2 - x1, y2 - y1];
-    vec = vec / norm(vec);  % Normalize
-    perp = [-vec(2), vec(1)];  % Perpendicular
-    L = 0.4;  % Length of arrowhead
-    W = 0.2;  % Width of arrowhead
-    base = [x2, y2] - L * vec;
-    arrow_x = [x2, base(1) + W*perp(1), base(1) - W*perp(1)];
-    arrow_y = [y2, base(2) + W*perp(2), base(2) - W*perp(2)];
-    patch(arrow_x, arrow_y, 'r', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
-end
 for i = 1:num_files
     text(AF_ITP_results(i, 1), AF_ITP_results(i, 2), num2str(i), ...
         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
 end
+
 xlabel('Azimuth Angle (deg)')
 ylabel('Elevation Angle (deg)')
-title('Signal Path with Transparent Arrows')
+title('Signal Path')
 grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
-
-figure(6)
-plot(Test_Mag', 'o-')
-ylabel('Magnitude (dB)')
-xlabel('File')
-title('Signal Strength vs File')
-legend('Antenna 1', 'Antenna 2', 'Antenna 3', 'Antenna 4', 'Antenna 5', 'Antenna 6', 'location', 'best')
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
 
 
 
@@ -240,15 +309,8 @@ if save_figs
     end
     saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
     saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
-    saveas(figure(4), fullfile(newFolderPath, 'Good_Frames.jpeg'));
     saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
-    saveas(figure(6), fullfile(newFolderPath, 'Signal_Strength.jpeg'));
-
-    parentFolder = fileparts(newFolderPath); % get parent folder
-    save(fullfile(parentFolder, 'AF_ITP_results.mat'), 'AF_ITP_results');
 end
-
-
 
 
 
