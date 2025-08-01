@@ -5,8 +5,9 @@ close all; clear all; clc;
 
 save_figs = 1;
 data_freq = 2.447; %Frequency of test data signal in GHz
-ref_lat = 32.45130;       % North is positive
+ref_lat = 32.450833;       % North is positive
 ref_lon = -111.21116;     % West is negative
+ref_direction = 90;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
 
@@ -53,7 +54,8 @@ data.y = data.y(good_idx);
 data.z = data.z(good_idx);
 data.UTC_seconds = data.UTC_seconds(good_idx);
 
-angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
+% angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
+angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = AF_ITP_results(:, 1) + angle_offset;
 
 

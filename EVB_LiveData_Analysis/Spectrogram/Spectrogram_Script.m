@@ -3,7 +3,7 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447\';
+path = 'U:\Falcon_Project\20250801_MaranaTest_DroneFlying_with_LidarCameraRadar_32.450833N_111.2125W_Facing90E_2.447GHz\';
 frame = 1;
 
 DMA=1;
