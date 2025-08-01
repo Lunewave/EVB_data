@@ -3,10 +3,11 @@ close all; clear all; clc;
 
 %% ROTATOR LOCATION
 
-save_figs = 0;
-data_freq = 2.427; %Frequency of test data signal in GHz
+save_figs = 1;
+data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
+noise_level_test = 45;
 
 
 
@@ -289,10 +290,11 @@ for ifile = 1:length(AF_ITP_results(:, 1))
     [a, I] = min(abs(antenna_time(ifile) - data.UTC_seconds));
     if a<1 %Check to see if the drone time is close enough to the antenna time for good error.
         error(ifile, :) = [AF_ITP_results(ifile, 1) - drone_az(I), AF_ITP_results(ifile, 2) - drone_el(I)];
-        dist(ifile) = drone_r(I);
+        drone_loc(ifile, :) = [drone_az(I) drone_el(I) drone_r(I)];
+
     else
         error(ifile, :) = [NaN NaN];
-        dist(ifile) = [NaN];
+        drone_loc(ifile, :) = [NaN NaN NaN];
 
     end
 end
@@ -329,8 +331,85 @@ ylabel('Elevation Angle (degrees)')
 legend('Drone Ground Truth', 'FALCON DF Results', 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
+
+figure(12)
+sgtitle(['6 Antenna SNR (Noise Level = ' num2str(noise_level_test) ' dB)'])
+for i = 1:6
+    subplot(2, 3, i)
+    scatter(drone_loc(:, 3), Test_Mag(i, :)-noise_level_test)
+    ylabel('SNR (dB)')
+    xlabel('Distance (m)')
+    ylim([0 55])
+    title(['Antenna ' num2str(i)])
+    grid on
+end
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+figure(13)
+sgtitle('6 Antenna Power Level')
+for i = 1:6
+    subplot(2, 3, i)
+    scatter(drone_loc(:, 3), 10.^(Test_Mag(i, :)/20))
+    ylabel('Power (dBm)')
+    xlabel('Distance (m)')
+    ylim([0 2.5*10^4])
+    title(['Antenna ' num2str(i)])
+    grid on
+end
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+figure(14)
+sgtitle('Error vs Distance')
+subplot(1, 2, 1)
+scatter(drone_loc(:, 3), abs(error(:, 1)))
+xlabel('Distance (m)')
+ylabel('Absolute Azimuth Error (degrees)')
+grid on
+subplot(1, 2, 2)
+scatter(drone_loc(:, 3), abs(error(:, 2)))
+xlabel('Distance (m)')
+ylabel('Absolute Elevation Error (degrees)')
+grid on
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+figure(15)
+sgtitle('Error vs Ground Truth')
+subplot(1, 2, 1)
+scatter(drone_loc(:, 1), error(:, 1))
+xlabel('Ground Truth Drone Azimuth (degrees)')
+ylabel('Azimuth Error (DF - GT) (degrees)')
+xlim([-180 180])
+grid on
+subplot(1, 2, 2)
+scatter(drone_loc(:, 2), error(:, 2))
+xlabel('Ground Truth Drone Elevation (degrees)')
+ylabel('Elevation Error (DF - GT) (degrees)')
+xlim([0 90])
+grid on
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
+
+
+
+
+
+%% Save Figures
 if save_figs
+    folderName = [num2str(data_freq*1000),'_MHz'];
+    path = fullfile(path, folderName);
+    
+    if ~exist(path, 'dir')
+        mkdir(path);
+    else
+        fprintf('Folder "%s" already exists.\n', folderName);
+    end
     saveas(figure(10), fullfile(path, 'Error.jpeg'));
     saveas(figure(11), fullfile(path, 'Full_Flight.jpeg'));
+    saveas(figure(12), fullfile(path, 'SNR.jpeg'));
+    saveas(figure(13), fullfile(path, 'Power.jpeg'));
+    saveas(figure(14), fullfile(path, 'Error_vs_Distance.jpeg'));
+    saveas(figure(15), fullfile(path, 'Error_vs_GT.jpeg'));
+
 end
 

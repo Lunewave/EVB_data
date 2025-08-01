@@ -1,9 +1,9 @@
 close all; clear all; clc;
 
-save_figs = 0;
+save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250729_MaranaTest_DroneFigure8_32.45130N_111.21116W_2.447GHz_setAngleOffset-5';
+testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;

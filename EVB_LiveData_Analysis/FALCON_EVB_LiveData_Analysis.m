@@ -1,9 +1,9 @@
 close all; clear all; clc;
 
-save_figs = 0;
+save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250729_MaranaTest_DroneFlyOutAndBack_32.45130N_111.21116W_2.427GHz';
+testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.427; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
