@@ -102,7 +102,8 @@ l_direction  = -4;
 r_direction = -8;
 
 figure;
-set(gcf, 'Position', [100, 100, 1800, 700]);
+set(gcf, 'WindowState', 'maximized');   % fill the screen completely
+t = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
 
 % Pre-compute limits
 margin = 10;
@@ -111,8 +112,7 @@ ylimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y
 zlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
 
 % Subplot 1: XY View
-subplot(1,3,1);
-axXY = gca;
+axXY = nexttile;
 xlabel('X (m)'); ylabel('Y (m)');
 title('XY View');
 grid on; axis equal;
@@ -121,8 +121,7 @@ hold on;
 surf(axXY, sX, sY, sZ + antenna_height);
 
 % Subplot 2: XZ View
-subplot(1,3,2);
-axXZ = gca;
+axXZ = nexttile;
 xlabel('X (m)'); ylabel('Z (m)');
 title('XZ View');
 grid on; axis equal;
@@ -130,9 +129,16 @@ xlim(xlimVals); ylim(zlimVals);
 hold on;
 surf(axXZ, sX, sY + antenna_height, sZ);
 
-% Subplot 3: Camera view
-subplot(1,3,3);
-axCAM = gca;
+% Subplot 3: Radar/Lidar
+axRL = nexttile;
+xlabel('X (m)'); ylabel('Y (m)')
+title('Radar and Lidar')
+grid on; axis equal;
+xlim(xlimVals); ylim(ylimVals);
+hold on;
+
+% Subplot 4: Camera view
+axCAM = nexttile;
 axis off;
 title('Camera View');
 C_Frame = imread([C_dir '\Frame_1.jpg']);
@@ -155,10 +161,10 @@ h_beamXZ = plot(axXZ, nan, nan, 'r--', 'LineWidth', 2);
 h_text = text(axXY, nan, nan, '', 'FontSize', 10, 'Color', [0.5 0.5 0.5]);
 
 % LIDAR and RADAR point clouds (as scatter3 projections)
-h_lidarXY = plot(axXY, nan, nan, 'k.', 'MarkerSize', 2);
-h_lidarXZ = plot(axXZ, nan, nan, 'k.', 'MarkerSize', 2);
-h_radarXY = plot(axXY, nan, nan, 'm.', 'MarkerSize', 10);
-h_radarXZ = plot(axXZ, nan, nan, 'm.', 'MarkerSize', 10);
+h_lidarXY = plot(axRL, nan, nan, 'k.', 'MarkerSize', 1);
+% h_lidarXZ = plot(axRL, nan, nan, 'k.', 'MarkerSize', 2);
+h_radarXY = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
+% h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
 
 
 for k = 1:numPoints
@@ -201,11 +207,11 @@ for k = 1:numPoints
 
     % --- Update LIDAR (green) ---
     set(h_lidarXY, 'XData', L_Frame(:,1), 'YData', L_Frame(:,2));
-    set(h_lidarXZ, 'XData', L_Frame(:,1), 'YData', L_Frame(:,3));
+    % set(h_lidarXZ, 'XData', L_Frame(:,1), 'YData', L_Frame(:,3));
     
     % --- Update RADAR (magenta) ---
     set(h_radarXY, 'XData', R_Frame(:,1), 'YData', R_Frame(:,2));
-    set(h_radarXZ, 'XData', R_Frame(:,1), 'YData', R_Frame(:,3));
+    % set(h_radarXZ, 'XData', R_Frame(:,1), 'YData', R_Frame(:,3));
     
     % --- Update CAMERA view ---
     set(h_camera, 'CData', C_Frame);
@@ -257,6 +263,10 @@ for k = 1:numPoints
     xlim(axXZ, [data.x(k) - delta, data.x(k) + delta]);
     ylim(axXZ, [data.z(k) - delta, data.z(k) + delta]);
 
+    % Update RL plot limits
+    xlim(axRL, [data.x(k) - delta, data.x(k) + delta]);
+    ylim(axRL, [data.z(k) - delta, data.z(k) + delta]);
+
 
 
 
@@ -284,10 +294,12 @@ for ifile = 1:length(AF_ITP_results(:, 1))
     if a<1 %Check to see if the drone time is close enough to the antenna time for good error.
         error(ifile, :) = [AF_ITP_results(ifile, 1) - drone_az(I), AF_ITP_results(ifile, 2) - drone_el(I)];
         drone_loc(ifile, :) = [drone_az(I) drone_el(I) drone_r(I)];
+        drone_rxy(ifile) = sqrt(data.x(I).^2 + data.y(I).^2);
 
     else
         error(ifile, :) = [NaN NaN];
         drone_loc(ifile, :) = [NaN NaN NaN];
+        drone_rxy(ifile) = NaN;
 
     end
 end
@@ -331,6 +343,32 @@ for i = 1:6
     subplot(2, 3, i)
     scatter(drone_loc(:, 3), Test_Mag(i, :)-noise_level_test)
 
+    [~, sorted_idx] = sort(drone_loc(:, 3));
+    drone_distance_sort = drone_loc(sorted_idx, 3);
+    SNR = (Test_Mag(i, :)-noise_level_test)';
+    SNR_sorted = SNR(sorted_idx);
+
+    hold on
+    X = 1 ./ drone_distance_sort;        % compute 1/r
+    Y = SNR_sorted;
+    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+    X = X(validIdx);
+    Y = Y(validIdx);
+
+
+    p = polyfit(X, Y, 1);
+    Y_fit = polyval(p, X);
+
+    plot(1./X, Y_fit)
+    eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
+    % plot(NaN, NaN, 'w')
+    ylabel('Power')
+    xlabel('Distance (m)')
+    ylim([0 2.5*10^4])
+    title(['Antenna ' num2str(i)])
+    grid on
+    legend('Raw Data', '1/r Fit', eqnStr, 'Location', 'best')
+
 
     ylabel('SNR (dB)')
     xlabel('Distance (m)')
@@ -346,16 +384,31 @@ for i = 1:6
     subplot(2, 3, i)
     scatter(drone_loc(:, 3), 10.^(Test_Mag(i, :)/20))
 
-    hold on
-    X = 1 ./ drone_loc(:, 3).^2;        % compute 1/r^2
-    A = X \ 10.^(Test_Mag(i, :)/20)';            % linear least squares fit (no intercept)
-    plot(drone_loc(:, 3), 10.^(Test_Mag(i, :)'/20),'x' , drone_loc(:, 3), A*X, '-r');
+    [~, sorted_idx] = sort(drone_loc(:, 3));
+    drone_distance_sort = drone_loc(sorted_idx, 3);
+    mag_sorted = 10.^(Test_Mag(i, sorted_idx)/20)';
 
+    hold on
+    X = 1 ./ drone_distance_sort.^2;        % compute 1/r^2
+    Y = mag_sorted;
+    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+    X = X(validIdx);
+    Y = Y(validIdx);
+
+
+    p = polyfit(X, Y, 1);
+    Y_fit = polyval(p, X);
+
+    plot(sqrt(1./X), Y_fit)
+    eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
+
+    % plot(NaN, NaN, 'w')
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
     title(['Antenna ' num2str(i)])
     grid on
+    legend('Raw Data', '1/r^{2} Fit', eqnStr, 'Location', 'best')
 end
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
@@ -428,6 +481,36 @@ grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
+figure(16)
+scatter(drone_rxy'.*cosd(AF_ITP_results(:, 1)), drone_rxy'.*sind(AF_ITP_results(:, 1)), 'filled')
+hold on
+for i = 1:num_files - 1
+    x1 = drone_rxy(i)'*cosd(AF_ITP_results(i, 1));
+    y1 = drone_rxy(i)'*sind(AF_ITP_results(i, 1));
+    x2 = drone_rxy(i+1)'*cosd(AF_ITP_results(i+1, 1));
+    y2 = drone_rxy(i+1)'*sind(AF_ITP_results(i+1, 1));
+    line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
+    vec = [x2 - x1, y2 - y1];
+    vec = vec / norm(vec);  % Normalize
+    perp = [-vec(2), vec(1)];  % Perpendicular
+    L = 0.4;  % Length of arrowhead
+    W = 0.2;  % Width of arrowhead
+    base = [x2, y2] - L * vec;
+    arrow_x = [x2, base(1) + W*perp(1), base(1) - W*perp(1)];
+    arrow_y = [y2, base(2) + W*perp(2), base(2) - W*perp(2)];
+    patch(arrow_x, arrow_y, 'r', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+end
+for i = 1:num_files
+    text(drone_rxy(i)'*cosd(AF_ITP_results(i, 1)), drone_rxy(i)'*sind(AF_ITP_results(i, 1)), num2str(i), ...
+        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
+end
+xlabel('X (m)')
+ylabel('Y (m)')
+title('Signal Path')
+grid on
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
 
 
 
@@ -449,6 +532,8 @@ if save_figs
     saveas(figure(13), fullfile(path, 'Power.jpeg'));
     saveas(figure(14), fullfile(path, 'Error_vs_Distance.jpeg'));
     saveas(figure(15), fullfile(path, 'Error_vs_GT.jpeg'));
+    saveas(figure(16), fullfile(path, 'Path.jpeg'));
+
 
 end
 

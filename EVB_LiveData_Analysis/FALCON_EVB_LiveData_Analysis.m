@@ -183,34 +183,6 @@ title('Number of Frames with Signal')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
-figure(5)
-scatter(AF_ITP_results(:, 1), AF_ITP_results(:, 2), 'filled')
-hold on
-for i = 1:num_files - 1
-    x1 = AF_ITP_results(i, 1);
-    y1 = AF_ITP_results(i, 2);
-    x2 = AF_ITP_results(i+1, 1);
-    y2 = AF_ITP_results(i+1, 2);
-    line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
-    vec = [x2 - x1, y2 - y1];
-    vec = vec / norm(vec);  % Normalize
-    perp = [-vec(2), vec(1)];  % Perpendicular
-    L = 0.4;  % Length of arrowhead
-    W = 0.2;  % Width of arrowhead
-    base = [x2, y2] - L * vec;
-    arrow_x = [x2, base(1) + W*perp(1), base(1) - W*perp(1)];
-    arrow_y = [y2, base(2) + W*perp(2), base(2) - W*perp(2)];
-    patch(arrow_x, arrow_y, 'r', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
-end
-for i = 1:num_files
-    text(AF_ITP_results(i, 1), AF_ITP_results(i, 2), num2str(i), ...
-        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
-end
-xlabel('Azimuth Angle (deg)')
-ylabel('Elevation Angle (deg)')
-title('Signal Path with Transparent Arrows')
-grid on
-set(gcf, 'Position', [100, 100, 1400, 700]);
 
 figure(6)
 plot(Test_Mag', 'o-')

@@ -4,7 +4,7 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 1;
-data_freq = 2.427; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
 % ref_direction = 92;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
@@ -61,7 +61,7 @@ data.UTC_seconds = polyval(p, 1:length(data.UTC_seconds)) - 3.5;        % Evalua
 
 
 
-angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
+angle_offset = -5%rad2deg(atan2(data.y(1), data.x(1)));
 % angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
@@ -185,6 +185,7 @@ fprintf('Video saved to: %s\n', videoName);
 
 
 
+%% Plot Figures
 drone_az = rad2deg(atan2(data.y, data.x));
 drone_el = rad2deg(atan2(data.z, sqrt(data.x.^2 + data.y.^2)));
 drone_r = sqrt(data.x.^2 + data.y.^2 + data.z.^2);
@@ -195,10 +196,12 @@ for ifile = 1:length(AF_ITP_results(:, 1))
     if a<1 %Check to see if the drone time is close enough to the antenna time for good error.
         error(ifile, :) = [AF_ITP_results(ifile, 1) - drone_az(I), AF_ITP_results(ifile, 2) - drone_el(I)];
         drone_loc(ifile, :) = [drone_az(I) drone_el(I) drone_r(I)];
+        drone_rxy(ifile) = sqrt(data.x(I).^2 + data.y(I).^2);
 
     else
         error(ifile, :) = [NaN NaN];
         drone_loc(ifile, :) = [NaN NaN NaN];
+        drone_rxy(ifile) = NaN;
 
     end
 end
@@ -241,6 +244,34 @@ sgtitle(['6 Antenna SNR (Noise Level = ' num2str(noise_level_test) ' dB)'])
 for i = 1:6
     subplot(2, 3, i)
     scatter(drone_loc(:, 3), Test_Mag(i, :)-noise_level_test)
+
+    [~, sorted_idx] = sort(drone_loc(:, 3));
+    drone_distance_sort = drone_loc(sorted_idx, 3);
+    SNR = (Test_Mag(i, :)-noise_level_test)';
+    SNR_sorted = SNR(sorted_idx);
+
+    hold on
+    X = 1 ./ drone_distance_sort;        % compute 1/r
+    Y = SNR_sorted;
+    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+    X = X(validIdx);
+    Y = Y(validIdx);
+
+
+    p = polyfit(X, Y, 1);
+    Y_fit = polyval(p, X);
+
+    plot(1./X, Y_fit)
+    eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
+    % plot(NaN, NaN, 'w')
+    ylabel('Power')
+    xlabel('Distance (m)')
+    ylim([0 2.5*10^4])
+    title(['Antenna ' num2str(i)])
+    grid on
+    legend('Raw Data', '1/r Fit', eqnStr, 'Location', 'best')
+
+
     ylabel('SNR (dB)')
     xlabel('Distance (m)')
     ylim([0 55])
@@ -254,6 +285,58 @@ sgtitle('6 Antenna Power Level')
 for i = 1:6
     subplot(2, 3, i)
     scatter(drone_loc(:, 3), 10.^(Test_Mag(i, :)/20))
+
+    [~, sorted_idx] = sort(drone_loc(:, 3));
+    drone_distance_sort = drone_loc(sorted_idx, 3);
+    mag_sorted = 10.^(Test_Mag(i, sorted_idx)/20)';
+
+    hold on
+    X = 1 ./ drone_distance_sort.^2;        % compute 1/r^2
+    Y = mag_sorted;
+    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+    X = X(validIdx);
+    Y = Y(validIdx);
+
+
+    p = polyfit(X, Y, 1);
+    Y_fit = polyval(p, X);
+
+    plot(sqrt(1./X), Y_fit)
+    eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
+
+    % plot(NaN, NaN, 'w')
+    ylabel('Power')
+    xlabel('Distance (m)')
+    ylim([0 2.5*10^4])
+    title(['Antenna ' num2str(i)])
+    grid on
+    legend('Raw Data', '1/r^{2} Fit', eqnStr, 'Location', 'best')
+end
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
+
+
+
+figure(13)
+sgtitle('6 Antenna Power Level')
+for i = 1:6
+    subplot(2, 3, i)
+
+    distances = drone_loc(:, 3);                  % r values
+    power = 10.^(Test_Mag(i, :) / 20)';           % y values (column)
+
+    X = 1 ./ distances.^2;                        % 1/r^2
+    A = X \ power;                                % least squares fit
+
+    % Sort for plotting a smooth fitted line
+    [dist_sorted, sort_idx] = sort(distances);
+    fit_line = A * (1 ./ dist_sorted.^2);
+
+    scatter(distances, power)
+    hold on
+    plot(dist_sorted, fit_line, '-r', 'LineWidth', 1.5)
+
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
@@ -261,6 +344,13 @@ for i = 1:6
     grid on
 end
 set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
+
+
+
+
+
 
 figure(14)
 sgtitle('Error vs Distance')
@@ -293,6 +383,36 @@ grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
+figure(16)
+scatter(drone_rxy'.*cosd(AF_ITP_results(:, 1)), drone_rxy'.*sind(AF_ITP_results(:, 1)), 'filled')
+hold on
+for i = 1:num_files - 1
+    x1 = drone_rxy(i)'*cosd(AF_ITP_results(i, 1));
+    y1 = drone_rxy(i)'*sind(AF_ITP_results(i, 1));
+    x2 = drone_rxy(i+1)'*cosd(AF_ITP_results(i+1, 1));
+    y2 = drone_rxy(i+1)'*sind(AF_ITP_results(i+1, 1));
+    line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
+    vec = [x2 - x1, y2 - y1];
+    vec = vec / norm(vec);  % Normalize
+    perp = [-vec(2), vec(1)];  % Perpendicular
+    L = 0.4;  % Length of arrowhead
+    W = 0.2;  % Width of arrowhead
+    base = [x2, y2] - L * vec;
+    arrow_x = [x2, base(1) + W*perp(1), base(1) - W*perp(1)];
+    arrow_y = [y2, base(2) + W*perp(2), base(2) - W*perp(2)];
+    patch(arrow_x, arrow_y, 'r', 'EdgeColor', 'none', 'FaceAlpha', 0.3);
+end
+for i = 1:num_files
+    text(drone_rxy(i)'*cosd(AF_ITP_results(i, 1)), drone_rxy(i)'*sind(AF_ITP_results(i, 1)), num2str(i), ...
+        'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'right', 'FontSize', 8)
+end
+xlabel('X (m)')
+ylabel('Y (m)')
+title('Signal Path')
+grid on
+set(gcf, 'Position', [100, 100, 1400, 700]);
+
+
 
 
 
@@ -314,6 +434,7 @@ if save_figs
     saveas(figure(13), fullfile(path, 'Power.jpeg'));
     saveas(figure(14), fullfile(path, 'Error_vs_Distance.jpeg'));
     saveas(figure(15), fullfile(path, 'Error_vs_GT.jpeg'));
+    saveas(figure(16), fullfile(path, 'Path.jpeg'));
+
 
 end
-
