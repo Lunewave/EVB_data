@@ -316,42 +316,6 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
 
-
-
-figure(13)
-sgtitle('6 Antenna Power Level')
-for i = 1:6
-    subplot(2, 3, i)
-
-    distances = drone_loc(:, 3);                  % r values
-    power = 10.^(Test_Mag(i, :) / 20)';           % y values (column)
-
-    X = 1 ./ distances.^2;                        % 1/r^2
-    A = X \ power;                                % least squares fit
-
-    % Sort for plotting a smooth fitted line
-    [dist_sorted, sort_idx] = sort(distances);
-    fit_line = A * (1 ./ dist_sorted.^2);
-
-    scatter(distances, power)
-    hold on
-    plot(dist_sorted, fit_line, '-r', 'LineWidth', 1.5)
-
-    ylabel('Power')
-    xlabel('Distance (m)')
-    ylim([0 2.5*10^4])
-    title(['Antenna ' num2str(i)])
-    grid on
-end
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
-
-
-
-
-
-
 figure(14)
 sgtitle('Error vs Distance')
 subplot(1, 2, 1)

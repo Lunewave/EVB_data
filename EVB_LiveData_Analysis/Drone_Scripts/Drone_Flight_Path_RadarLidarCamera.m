@@ -3,7 +3,8 @@ close all; clear all; clc;
 
 %% ROTATOR LOCATION
 
-save_figs = 1;
+save_figs = 0;
+video = 0;
 data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.451553;       % North is positive
 ref_lon = -111.211068;     % West is negative
@@ -74,6 +75,7 @@ data.UTC_seconds = data.UTC_seconds(good_idx);
 p = polyfit(1:length(data.UTC_seconds), data.UTC_seconds, 1);         % Fit y = p(1)*x + p(2)
 data.UTC_seconds = polyval(p, 1:length(data.UTC_seconds)) - 3.5;        % Evaluate the fitted line at x
 
+dt = data.UTC_seconds - data.UTC_seconds(1);
 
 
 % angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
@@ -84,202 +86,212 @@ AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
 
 %% Setup video writer
-videoName = fullfile(path, 'Drone_Flight_Path_XY_XZ.mp4');
-v = VideoWriter(videoName, 'MPEG-4');
-v.FrameRate = 10;
-open(v);
-
-%% XY + XZ Video
-numPoints = length(data.UTC_seconds);
-trailLength = 5;  % last 5 points in trail
-baseSize = 36;    % largest marker size
-
-[sX, sY, sZ] = sphere;
-antenna_height = 2;
-l_pos = [0 -0.7 0];
-r_pos = [0 -1.43 0];
-l_direction  = -4;
-r_direction = -8;
-
-figure;
-set(gcf, 'WindowState', 'maximized');   % fill the screen completely
-t = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
-
-% Pre-compute limits
-margin = 10;
-xlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
-ylimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
-zlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
-
-% Subplot 1: XY View
-axXY = nexttile;
-xlabel('X (m)'); ylabel('Y (m)');
-title('XY View');
-grid on; axis equal;
-xlim(xlimVals); ylim(ylimVals);
-hold on;
-surf(axXY, sX, sY, sZ + antenna_height);
-
-% Subplot 2: XZ View
-axXZ = nexttile;
-xlabel('X (m)'); ylabel('Z (m)');
-title('XZ View');
-grid on; axis equal;
-xlim(xlimVals); ylim(zlimVals);
-hold on;
-surf(axXZ, sX, sY + antenna_height, sZ);
-
-% Subplot 3: Radar/Lidar
-axRL = nexttile;
-xlabel('X (m)'); ylabel('Y (m)')
-title('Radar and Lidar')
-grid on; axis equal;
-xlim(xlimVals); ylim(ylimVals);
-hold on;
-
-% Subplot 4: Camera view
-axCAM = nexttile;
-axis off;
-title('Camera View');
-C_Frame = imread([C_dir '\Frame_1.jpg']);
-h_camera = imshow(C_Frame, 'Parent', axCAM);   % <- imshow used here ONCE
-
-
-
-% Initialize trails
-h_trailXY = gobjects(trailLength,1);
-h_trailXZ = gobjects(trailLength,1);
-for i = 1:trailLength
-    h_trailXY(i) = plot(axXY, nan, nan, 'bo', 'MarkerFaceColor', 'b');
-    h_trailXZ(i) = plot(axXZ, nan, nan, 'bo', 'MarkerFaceColor', 'b');
-end
-
-h_markerXY = plot(axXY, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
-h_markerXZ = plot(axXZ, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
-h_beamXY = plot(axXY, nan, nan, 'r--', 'LineWidth', 2);
-h_beamXZ = plot(axXZ, nan, nan, 'r--', 'LineWidth', 2);
-h_text = text(axXY, nan, nan, '', 'FontSize', 10, 'Color', [0.5 0.5 0.5]);
-
-% LIDAR and RADAR point clouds (as scatter3 projections)
-h_lidarXY = plot(axRL, nan, nan, 'k.', 'MarkerSize', 1);
-% h_lidarXZ = plot(axRL, nan, nan, 'k.', 'MarkerSize', 2);
-h_radarXY = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
-% h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
-
-
-for k = 1:numPoints
-    % Find matching antenna frame
-    [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
-    if a<4
-        curr_az = deg2rad(AF_ITP_results(I, 1));
-        curr_el = deg2rad(AF_ITP_results(I, 2));
-        r = sqrt(data.x(k)^2 + data.y(k)^2 + data.z(k)^2)*1.1;
-        x = r*cos(curr_el)*cos(curr_az);
-        y = r*cos(curr_el)*sin(curr_az);
-        z = r*sin(curr_el) + antenna_height;
-    else
-        curr_az = NaN;
-        curr_el = NaN;
-        r = sqrt(data.x(k)^2 + data.y(k)^2 + data.z(k)^2)*1.1;
-        x = r*cos(curr_el)*cos(curr_az);
-        y = r*cos(curr_el)*sin(curr_az);
-        z = r*sin(curr_el) + antenna_height;
-    end
-
-
-    %%% DO THIS FOR LIDAR, CAMERA, RADAR
-
-    [~, I] = min(abs(L_Time - data.UTC_seconds(k)));
-    L_Frame = load([L_dir '\Frame_' num2str(I) '.mat']);
-    [xtemp ytemp] = deal(cosd(l_direction)*L_Frame.X - sind(l_direction)*L_Frame.Y + l_pos(1), sind(l_direction)*L_Frame.X + cosd(l_direction)*L_Frame.Y + l_pos(2));
-    L_Frame = [xtemp, ytemp, L_Frame.Z+l_pos(3)];
-
-
-    [~, I] = min(abs(R_Time - data.UTC_seconds(k)));
-    R_Frame = load([R_dir '\Frame_' num2str(I) '.mat']);
-    [xtemp ytemp] = deal(cosd(r_direction)*R_Frame.X - sind(r_direction)*R_Frame.Y + r_pos(1), sind(r_direction)*R_Frame.X + cosd(r_direction)*R_Frame.Y + r_pos(2));
-    R_Frame = [xtemp, ytemp, R_Frame.Z+r_pos(3)];
-
-
-    [~, I] = min(abs(C_Time - data.UTC_seconds(k)));
-    C_Frame = imread([C_dir '\Frame_' num2str(I) '.jpg']);
-
-
-    % --- Update LIDAR (green) ---
-    set(h_lidarXY, 'XData', L_Frame(:,1), 'YData', L_Frame(:,2));
-    % set(h_lidarXZ, 'XData', L_Frame(:,1), 'YData', L_Frame(:,3));
+if video
+    videoName = fullfile(path, 'Drone_Flight_Path_XY_XZ.mp4');
+    v = VideoWriter(videoName, 'MPEG-4');
+    v.FrameRate = 10;
+    open(v);
     
-    % --- Update RADAR (magenta) ---
-    set(h_radarXY, 'XData', R_Frame(:,1), 'YData', R_Frame(:,2));
-    % set(h_radarXZ, 'XData', R_Frame(:,1), 'YData', R_Frame(:,3));
+    %% XY + XZ Video
+    numPoints = length(data.UTC_seconds);
+    trailLength = 5;  % last 5 points in trail
+    baseSize = 36;    % largest marker size
     
-    % --- Update CAMERA view ---
-    set(h_camera, 'CData', C_Frame);
-
-
-
-
-    % Update beam
-    set(h_beamXY, 'XData', [0, x], 'YData', [0, y]);
-    set(h_beamXZ, 'XData', [0, x], 'YData', [antenna_height, z]);
-
-    % Trail
-    trailIdx = max(1, k-trailLength+1):k;
+    [sX, sY, sZ] = sphere;
+    antenna_height = 2;
+    l_pos = [0 -0.7 0];
+    r_pos = [0 -1.43 0];
+    l_direction  = -4;
+    r_direction = -8;
+    
+    figure;
+    set(gcf, 'WindowState', 'maximized');   % fill the screen completely
+    t = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+    
+    % Pre-compute limits
+    margin = 10;
+    xlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
+    ylimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
+    zlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
+    
+    % Subplot 1: XY View
+    axXY = nexttile;
+    xlabel('X (m)'); ylabel('Y (m)');
+    title('XY View');
+    grid on; axis equal;
+    xlim(xlimVals); ylim(ylimVals);
+    hold on;
+    surf(axXY, sX, sY, sZ + antenna_height);
+    
+    % Subplot 2: XZ View
+    axXZ = nexttile;
+    xlabel('X (m)'); ylabel('Z (m)');
+    title('XZ View');
+    grid on; axis equal;
+    xlim(xlimVals); ylim(zlimVals);
+    hold on;
+    surf(axXZ, sX, sY + antenna_height, sZ);
+    
+    % Subplot 3: Radar/Lidar
+    axRL = nexttile;
+    xlabel('X (m)'); ylabel('Y (m)')
+    title('Radar and Lidar')
+    grid on; axis equal;
+    xlim(xlimVals); ylim(ylimVals);
+    hold on;
+    
+    % Subplot 4: Camera view
+    axCAM = nexttile;
+    axis off;
+    title('Camera View');
+    C_Frame = imread([C_dir '\Frame_1.jpg']);
+    h_camera = imshow(C_Frame, 'Parent', axCAM);   % <- imshow used here ONCE
+    
+    
+    
+    % Initialize trails
+    h_trailXY = gobjects(trailLength,1);
+    h_trailXZ = gobjects(trailLength,1);
     for i = 1:trailLength
-        if i <= length(trailIdx)
-            idx = trailIdx(i);
-            sizeFactor = baseSize / (length(trailIdx) - i + 1);
-            set(h_trailXY(i), 'XData', data.x(idx), 'YData', data.y(idx), 'MarkerSize', sizeFactor/6);
-            set(h_trailXZ(i), 'XData', data.x(idx), 'YData', data.z(idx), 'MarkerSize', sizeFactor/6);
-        else
-            set(h_trailXY(i), 'XData', nan, 'YData', nan);
-            set(h_trailXZ(i), 'XData', nan, 'YData', nan);
-        end
+        h_trailXY(i) = plot(axXY, nan, nan, 'bo', 'MarkerFaceColor', 'b');
+        h_trailXZ(i) = plot(axXZ, nan, nan, 'bo', 'MarkerFaceColor', 'b');
     end
-
-    % Update drone marker
-    set(h_markerXY, 'XData', data.x(k), 'YData', data.y(k));
-    set(h_markerXZ, 'XData', data.x(k), 'YData', data.z(k));
-
-    % Altitude label in XY plot
-    set(h_text, 'Position', [data.x(k), data.y(k)], ...
-        'String', sprintf('Alt: %.1f m', data.z(k)));
-
-
-    uistack(h_beamXY, 'top');
-    uistack(h_beamXZ, 'top');
-    uistack(h_markerXY, 'top');
-    uistack(h_markerXZ, 'top');
-    uistack(h_trailXY, 'top');
-    uistack(h_trailXZ, 'top');
-    % Range window around drone
-    delta = 30;
     
-    % Update XY plot limits
-    xlim(axXY, [data.x(k) - delta, data.x(k) + delta]);
-    ylim(axXY, [data.y(k) - delta, data.y(k) + delta]);
+    h_markerXY = plot(axXY, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
+    h_markerXZ = plot(axXZ, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
+    h_beamXY = plot(axXY, nan, nan, 'r--', 'LineWidth', 2);
+    h_beamXZ = plot(axXZ, nan, nan, 'r--', 'LineWidth', 2);
+    h_text = text(axXY, nan, nan, '', 'FontSize', 10, 'Color', [0.5 0.5 0.5]);
     
-    % Update XZ plot limits
-    xlim(axXZ, [data.x(k) - delta, data.x(k) + delta]);
-    ylim(axXZ, [data.z(k) - delta, data.z(k) + delta]);
-
-    % Update RL plot limits
-    xlim(axRL, [data.x(k) - delta, data.x(k) + delta]);
-    ylim(axRL, [data.z(k) - delta, data.z(k) + delta]);
-
-
-
-
-    drawnow;
-    pause(0.1);
+    % LIDAR and RADAR point clouds (as scatter3 projections)
+    h_lidarXY = plot(axRL, nan, nan, 'k.', 'MarkerSize', 1);
+    % h_lidarXZ = plot(axRL, nan, nan, 'k.', 'MarkerSize', 2);
+    h_radarXY = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
+    % h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
     
-    frame = getframe(gcf);
-    writeVideo(v, frame);
-    sgtitle([num2str(k)])
+    
+    for k = 1:numPoints
+        % Find matching antenna frame
+        [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
+        if a<4
+            curr_az = deg2rad(AF_ITP_results(I, 1));
+            curr_el = deg2rad(AF_ITP_results(I, 2));
+            r = sqrt(data.x(k)^2 + data.y(k)^2 + data.z(k)^2)*1.1;
+            x = r*cos(curr_el)*cos(curr_az);
+            y = r*cos(curr_el)*sin(curr_az);
+            z = r*sin(curr_el) + antenna_height;
+        else
+            curr_az = NaN;
+            curr_el = NaN;
+            r = sqrt(data.x(k)^2 + data.y(k)^2 + data.z(k)^2)*1.1;
+            x = r*cos(curr_el)*cos(curr_az);
+            y = r*cos(curr_el)*sin(curr_az);
+            z = r*sin(curr_el) + antenna_height;
+        end
+    
+    
+        %%% DO THIS FOR LIDAR, CAMERA, RADAR
+    
+        [~, I] = min(abs(L_Time - data.UTC_seconds(k)));
+        L_Frame = load([L_dir '\Frame_' num2str(I) '.mat']);
+        [xtemp ytemp] = deal(cosd(l_direction)*L_Frame.X - sind(l_direction)*L_Frame.Y + l_pos(1), sind(l_direction)*L_Frame.X + cosd(l_direction)*L_Frame.Y + l_pos(2));
+        L_Frame = [xtemp, ytemp, L_Frame.Z+l_pos(3)];
+    
+    
+        [~, I] = min(abs(R_Time - data.UTC_seconds(k)));
+        R_Frame = load([R_dir '\Frame_' num2str(I) '.mat']);
+        [xtemp ytemp] = deal(cosd(r_direction)*R_Frame.X - sind(r_direction)*R_Frame.Y + r_pos(1), sind(r_direction)*R_Frame.X + cosd(r_direction)*R_Frame.Y + r_pos(2));
+        R_Frame = [xtemp, ytemp, R_Frame.Z+r_pos(3)];
+    
+    
+        [~, I] = min(abs(C_Time - data.UTC_seconds(k)));
+        C_Frame = imread([C_dir '\Frame_' num2str(I) '.jpg']);
+    
+    
+        % --- Update LIDAR (green) ---
+        set(h_lidarXY, 'XData', L_Frame(:,1), 'YData', L_Frame(:,2));
+        % set(h_lidarXZ, 'XData', L_Frame(:,1), 'YData', L_Frame(:,3));
+        
+        % --- Update RADAR (magenta) ---
+        set(h_radarXY, 'XData', R_Frame(:,1), 'YData', R_Frame(:,2));
+        % set(h_radarXZ, 'XData', R_Frame(:,1), 'YData', R_Frame(:,3));
+        
+        % --- Update CAMERA view ---
+        set(h_camera, 'CData', C_Frame);
+    
+    
+    
+    
+        % Update beam
+        set(h_beamXY, 'XData', [0, x], 'YData', [0, y]);
+        set(h_beamXZ, 'XData', [0, x], 'YData', [antenna_height, z]);
+    
+        % Trail
+        trailIdx = max(1, k-trailLength+1):k;
+        for i = 1:trailLength
+            if i <= length(trailIdx)
+                idx = trailIdx(i);
+                sizeFactor = baseSize / (length(trailIdx) - i + 1);
+                set(h_trailXY(i), 'XData', data.x(idx), 'YData', data.y(idx), 'MarkerSize', sizeFactor/6);
+                set(h_trailXZ(i), 'XData', data.x(idx), 'YData', data.z(idx), 'MarkerSize', sizeFactor/6);
+            else
+                set(h_trailXY(i), 'XData', nan, 'YData', nan);
+                set(h_trailXZ(i), 'XData', nan, 'YData', nan);
+            end
+        end
+    
+        % Update drone marker
+        set(h_markerXY, 'XData', data.x(k), 'YData', data.y(k));
+        set(h_markerXZ, 'XData', data.x(k), 'YData', data.z(k));
+    
+        % Altitude label in XY plot
+        set(h_text, 'Position', [data.x(k)+1, data.y(k)-1], ...
+            'String', sprintf('Alt: %.1f m', data.z(k)));
+    
+    
+        uistack(h_beamXY, 'top');
+        uistack(h_beamXZ, 'top');
+        uistack(h_markerXY, 'top');
+        uistack(h_markerXZ, 'top');
+        uistack(h_trailXY, 'top');
+        uistack(h_trailXZ, 'top');
+        % Range window around drone
+        delta = 30;
+        
+        % Update XY plot limits
+        xlim(axXY, [data.x(k) - delta, data.x(k) + delta]);
+        ylim(axXY, [data.y(k) - delta, data.y(k) + delta]);
+        
+        % Update XZ plot limits
+        xlim(axXZ, [data.x(k) - delta, data.x(k) + delta]);
+        ylim(axXZ, [data.z(k) - delta, data.z(k) + delta]);
+    
+        % Update RL plot limits
+        xlim(axRL, [data.x(k) - delta, data.x(k) + delta]);
+        ylim(axRL, [data.z(k) - delta, data.z(k) + delta]);
+    
+        
+        if k == 1
+            legend(axXY, [h_trailXY(end), h_beamXY], {'Drone Position (GPS Estimation)', 'Antenna DF Results'}, 'Location', 'northeast');
+            legend(axXZ, [h_trailXZ(end), h_beamXZ], {'Drone Altitude', 'Antenna DF Results'}, 'Location', 'northeast');
+            legend(axRL, [h_lidarXY, h_radarXY], {'Lidar', 'Radar'}, 'Location', 'northeast');
+        end
+        
+    
+    
+    
+    
+        drawnow;
+        pause(0.1);
+        
+        frame = getframe(gcf);
+        writeVideo(v, frame);
+        sgtitle(['t = ' num2str(dt(k)) ' s'])
+    end
+    
+    close(v);
+    fprintf('Video saved to: %s\n', videoName);
 end
-
-close(v);
-fprintf('Video saved to: %s\n', videoName);
 
 
 
@@ -361,7 +373,7 @@ for i = 1:6
 
     plot(1./X, Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
-    % plot(NaN, NaN, 'w')
+    plot(NaN, NaN, 'w')
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
@@ -402,7 +414,7 @@ for i = 1:6
     plot(sqrt(1./X), Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
 
-    % plot(NaN, NaN, 'w')
+    plot(NaN, NaN, 'w')
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
@@ -411,42 +423,6 @@ for i = 1:6
     legend('Raw Data', '1/r^{2} Fit', eqnStr, 'Location', 'best')
 end
 set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
-
-
-
-figure(13)
-sgtitle('6 Antenna Power Level')
-for i = 1:6
-    subplot(2, 3, i)
-
-    distances = drone_loc(:, 3);                  % r values
-    power = 10.^(Test_Mag(i, :) / 20)';           % y values (column)
-
-    X = 1 ./ distances.^2;                        % 1/r^2
-    A = X \ power;                                % least squares fit
-
-    % Sort for plotting a smooth fitted line
-    [dist_sorted, sort_idx] = sort(distances);
-    fit_line = A * (1 ./ dist_sorted.^2);
-
-    scatter(distances, power)
-    hold on
-    plot(dist_sorted, fit_line, '-r', 'LineWidth', 1.5)
-
-    ylabel('Power')
-    xlabel('Distance (m)')
-    ylim([0 2.5*10^4])
-    title(['Antenna ' num2str(i)])
-    grid on
-end
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-
-
-
-
 
 
 
