@@ -13,8 +13,8 @@ noise_level_test = 45;
 
 
 %% Load Data
-% [csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
-[csv, path] = uigetfile('D:\Lunewave\Falcon_antenna\Real_measurement_data\Drone_data\*.csv', 'Select CSV Flight Record');
+[csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
+%[csv, path] = uigetfile('D:\Lunewave\Falcon_antenna\Real_measurement_data\Drone_data\*.csv', 'Select CSV Flight Record');
 
 
 test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
