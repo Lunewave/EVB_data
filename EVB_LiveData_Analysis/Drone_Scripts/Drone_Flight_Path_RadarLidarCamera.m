@@ -82,8 +82,9 @@ dt = data.UTC_seconds - data.UTC_seconds(1);
 angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
-
-
+numPoints = length(data.UTC_seconds);
+startk = 1;
+endk = numPoints;
 
 %% Setup video writer
 if video
@@ -93,7 +94,6 @@ if video
     open(v);
     
     %% XY + XZ Video
-    numPoints = length(data.UTC_seconds);
     trailLength = 5;  % last 5 points in trail
     baseSize = 36;    % largest marker size
     
@@ -110,9 +110,9 @@ if video
     
     % Pre-compute limits
     margin = 10;
-    xlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
-    ylimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
-    zlimVals = [min([min(data.x), min(data.y)])-margin, max([max(data.x), max(data.y)])+margin];
+    xlimVals = [min([min(data.x(startk:endk)), min(data.y(startk:endk))])-margin, max([max(data.x(startk:endk)), max(data.y(startk:endk))])+margin];
+    ylimVals = [min([min(data.x(startk:endk)), min(data.y(startk:endk))])-margin, max([max(data.x(startk:endk)), max(data.y(startk:endk))])+margin];
+    zlimVals = [min([min(data.x(startk:endk)), min(data.y(startk:endk))])-margin, max([max(data.x(startk:endk)), max(data.y(startk:endk))])+margin];
     
     % Subplot 1: XY View
     axXY = nexttile;
@@ -170,7 +170,7 @@ if video
     % h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
     
     
-    for k = 1:numPoints
+    for k = startk:endk
         % Find matching antenna frame
         [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
         if a<4
@@ -286,7 +286,7 @@ if video
         
         frame = getframe(gcf);
         writeVideo(v, frame);
-        sgtitle(['t = ' num2str(dt(k)) ' s'])
+        sgtitle(['t = ' num2str(dt(k) - dt(startk)) ' s'])
     end
     
     close(v);
