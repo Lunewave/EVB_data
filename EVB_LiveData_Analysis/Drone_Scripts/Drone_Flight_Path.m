@@ -239,6 +239,7 @@ legend('Drone Ground Truth', 'FALCON DF Results', 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
+
 figure(12)
 sgtitle(['6 Antenna SNR (Noise Level = ' num2str(noise_level_test) ' dB)'])
 for i = 1:6
@@ -261,15 +262,23 @@ for i = 1:6
     p = polyfit(X, Y, 1);
     Y_fit = polyval(p, X);
 
+    % Compute R^2
+    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+    R_squared = 1 - (SS_res / SS_tot);
+
     plot(1./X, Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
-    % plot(NaN, NaN, 'w')
+    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
+    plot(NaN, NaN, 'w')
+    plot(NaN, NaN, 'w')
+
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
     title(['Antenna ' num2str(i)])
     grid on
-    legend('Raw Data', '1/r Fit', eqnStr, 'Location', 'best')
+    legend('Raw Data', '1/r Fit', eqnStr, rsquare, 'Location', 'best')
 
 
     ylabel('SNR (dB)')
@@ -301,16 +310,22 @@ for i = 1:6
     p = polyfit(X, Y, 1);
     Y_fit = polyval(p, X);
 
+    % Compute R^2
+    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+    R_squared = 1 - (SS_res / SS_tot);
+
     plot(sqrt(1./X), Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
-
-    % plot(NaN, NaN, 'w')
+    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
+    plot(NaN, NaN, 'w')
+    plot(NaN, NaN, 'w')
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
     title(['Antenna ' num2str(i)])
     grid on
-    legend('Raw Data', '1/r^{2} Fit', eqnStr, 'Location', 'best')
+    legend('Raw Data', '1/r^{2} Fit', eqnStr, rsquare, 'Location', 'best')
 end
 set(gcf, 'Position', [100, 100, 1400, 700]);
 

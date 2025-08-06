@@ -3,7 +3,7 @@ close all; clear all; clc;
 
 %% ROTATOR LOCATION
 
-save_figs = 0;
+save_figs = 1;
 video = 0;
 data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.451553;       % North is positive
@@ -371,15 +371,23 @@ for i = 1:6
     p = polyfit(X, Y, 1);
     Y_fit = polyval(p, X);
 
+    % Compute R^2
+    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+    R_squared = 1 - (SS_res / SS_tot);
+
     plot(1./X, Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
+    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
     plot(NaN, NaN, 'w')
+    plot(NaN, NaN, 'w')
+
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
     title(['Antenna ' num2str(i)])
     grid on
-    legend('Raw Data', '1/r Fit', eqnStr, 'Location', 'best')
+    legend('Raw Data', '1/r Fit', eqnStr, rsquare, 'Location', 'best')
 
 
     ylabel('SNR (dB)')
@@ -411,16 +419,22 @@ for i = 1:6
     p = polyfit(X, Y, 1);
     Y_fit = polyval(p, X);
 
+    % Compute R^2
+    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+    R_squared = 1 - (SS_res / SS_tot);
+
     plot(sqrt(1./X), Y_fit)
     eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
-
+    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
+    plot(NaN, NaN, 'w')
     plot(NaN, NaN, 'w')
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
     title(['Antenna ' num2str(i)])
     grid on
-    legend('Raw Data', '1/r^{2} Fit', eqnStr, 'Location', 'best')
+    legend('Raw Data', '1/r^{2} Fit', eqnStr, rsquare, 'Location', 'best')
 end
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
@@ -492,6 +506,7 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
 
+
 %% Save Figures
 if save_figs
     folderName = [num2str(data_freq*1000),'_MHz'];
@@ -513,3 +528,34 @@ if save_figs
 
 end
 
+% frame_start = 1436;
+% frame_end = 1850;
+% ROI = [35 45 -5 5 -5 5];
+% 
+% for frame = frame_start:frame_end
+%     frame
+%     radar2 = load([R_dir '\Frame_' num2str(frame) '.mat']);
+%     R_Frame = pointCloud([radar2.X,radar2.Y,radar2.Z],'Intensity',radar2.amplitude,'Normal',[radar2.doppler_org,radar2.velocity,radar2.SINR]);
+%     ind = findPointsInROI(R_Frame,ROI); % Find points that are in the roi
+%     R_Frame = select(R_Frame,ind); % select the points
+%     ind = find(abs(R_Frame.Normal(:, 2))>0);
+%     R_Frame = select(R_Frame, ind);
+%     [~, ind] = max(R_Frame.Intensity);
+% 
+%     [a, I] = min(abs(R_Time(frame) - data.UTC_seconds));
+%     if R_Frame.Count>0
+% 
+% 
+%         radar_drone(frame - frame_start + 1, :) = [R_Frame.Location(ind, :)];
+% 
+%     else
+%         radar_drone(frame-frame_start+1, :) = [NaN NaN NaN];
+% 
+%     end
+% 
+%     if ~isnan(radar_drone(frame-frame_start+1, :))
+%         ROI = [radar_drone(frame - frame_start + 1, 1)-10 radar_drone(frame - frame_start + 1, 1)+10 radar_drone(frame - frame_start + 1, 2)-5 radar_drone(frame - frame_start + 1, 2)+5 radar_drone(frame - frame_start + 1, 3)-1 radar_drone(frame - frame_start + 1, 3)+10];
+%     end
+% end
+% 
+% plot(radar_drone(:, 1), radar_drone(:, 2))
