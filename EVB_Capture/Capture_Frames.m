@@ -7,15 +7,15 @@ i = 1;
 stopLoop = false;
 
 % Setup Control from Host PC to EVB
-evb= serialport('COM10', 115200);
+evb= serialport('COM8', 115200);
 evb.Timeout = 1;
 
 
 write(evb, 's', 'char');
 write(evb,newline, 'char');
 
-GetConf0irmFromEVB(evb, 'WaitForChar');
-disp('First frame captured')
+GetConfirmFromEVB(evb, 'WaitForChar');
+disp('Frame 0 captured')
 
 
 % Initialize empty datetime array
@@ -41,7 +41,7 @@ while ishandle(hFig) && ~getappdata(hFig, 'stopFlag')
     disp(['Frame ' num2str(i) ' Captured at ' char(timeStamps(i))]);
 
     i = i + 1;
-    pause(0.25);
+%     pause(0.25);
 end
 
 close(hFig);
