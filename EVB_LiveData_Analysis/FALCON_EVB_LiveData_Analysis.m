@@ -213,7 +213,6 @@ if save_figs
     saveas(figure(1), fullfile(newFolderPath, 'Azimuth.jpeg'));
     saveas(figure(2), fullfile(newFolderPath, 'Elevation.jpeg'));
     saveas(figure(4), fullfile(newFolderPath, 'Good_Frames.jpeg'));
-    saveas(figure(5), fullfile(newFolderPath, 'Path.jpeg'));
     saveas(figure(6), fullfile(newFolderPath, 'Signal_Strength.jpeg'));
 
     parentFolder = fileparts(newFolderPath); % get parent folder
