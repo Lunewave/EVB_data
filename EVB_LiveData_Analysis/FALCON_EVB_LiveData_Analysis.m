@@ -3,7 +3,7 @@ close all; clear all; clc;
 save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250801_MaranaTest_DroneFlying_with_LidarCameraRadar_32.450833N_111.2125W_Facing90E_2.447GHz';
+testpath = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading104E\Square_2.447GHz';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;

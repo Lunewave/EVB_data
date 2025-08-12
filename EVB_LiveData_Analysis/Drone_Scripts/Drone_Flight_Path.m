@@ -4,13 +4,13 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 1;
-data_freq = 2.447; %Frequency of test data signal in GHz
+data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
 % ref_direction = 92;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-
+t_offset = 3.5;
 
 %% Load Data
 [csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
@@ -24,7 +24,7 @@ load([path 'MyTimestamps.mat'])
 temp = load([path 'MyTimestamps.mat']);
 fn = fieldnames(temp);
 antenna_time = temp.(fn{1});
-antenna_time = posixtime(antenna_time);
+antenna_time = posixtime(antenna_time)+t_offset;
 load([path 'AF_ITP_results.mat'])
 
 fullpath = fullfile(path, csv);
@@ -35,7 +35,11 @@ for col = 1:width(T)
 end
 
 data.datetime_utc_.TimeZone = 'UTC';
-data.UTC_seconds = data.datetime_utc_ + seconds(mod(data.time_millisecond_, 1000)/1000);
+t1 = data.datetime_utc_(1);
+idxsame = find(data.datetime_utc_(1:10) == t1);
+offset = (10-length(idxsame));
+data.time_millisecond_ = data.time_millisecond_ - data.time_millisecond_(1);
+data.UTC_seconds = data.datetime_utc_(1) + seconds(data.time_millisecond_ + offset*100)/1000;
 data.UTC_seconds.Format = 'yyyy-MM-dd HH:mm:ss.SSS';
 data.UTC_seconds = posixtime(data.UTC_seconds);
 
@@ -53,12 +57,6 @@ data.x = data.x(good_idx);
 data.y = data.y(good_idx);
 data.z = data.z(good_idx);
 data.UTC_seconds = data.UTC_seconds(good_idx);
-% Smooth Time Data
-
-% Assuming you have vectors x and y
-p = polyfit(1:length(data.UTC_seconds), data.UTC_seconds, 1);         % Fit y = p(1)*x + p(2)
-data.UTC_seconds = polyval(p, 1:length(data.UTC_seconds)) - 3.5;        % Evaluate the fitted line at x
-
 
 
 angle_offset = -5%rad2deg(atan2(data.y(1), data.x(1)));

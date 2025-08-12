@@ -3,8 +3,8 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250801_MaranaTest_DroneFlying_with_LidarCameraRadar_32.451553N_111.211080W_Facing92E_2.447GHz\';
-frame = 1;
+path = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading104E\Square_2.447GHz\';
+frame = 5;
 
 DMA=1;
 num_frames = 0;
