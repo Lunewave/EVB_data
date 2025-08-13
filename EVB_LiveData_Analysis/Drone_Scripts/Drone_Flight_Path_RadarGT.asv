@@ -271,32 +271,22 @@ r_direction = -5;
 
 
 for ifile = 1:length(AF_ITP_results(:, 1))
-    drone_det = [];
     [a, I] = min(abs(antenna_time(ifile) - L_Time));
-    while isempty(drone_det) & a<.05
-
+    if a<1 %Check to see if the Lidar time is close enough to the antenna time for good error.
 
         L_Frame = load([L_dir '\Frame_' num2str(I) '.mat']);
         [xtemp ytemp] = deal(cosd(l_direction)*L_Frame.X - sind(l_direction)*L_Frame.Y + l_pos(1), sind(l_direction)*L_Frame.X + cosd(l_direction)*L_Frame.Y + l_pos(2));
         L_Frame = [xtemp, ytemp, L_Frame.Z+l_pos(3)];
 
 
-        good_idx = find(L_Frame(:, 1)<60);
+        good_idx = find(L_Frame(:, 1)<50);
         L_Frame = L_Frame(good_idx, :);
-        good_idx = find(abs(L_Frame(:, 2))<30);
-        L_Frame = L_Frame(good_idx, :);
+        
         good_idx = find(L_Frame(:, 3)>-1);
         L_Frame = L_Frame(good_idx, :);
 
         % check if has points above 2m
         drone_det = find(L_Frame(:, 3)>2);
-
-
-
-
-
-
-    end
 
         scatter3(L_Frame(:, 1), L_Frame(:, 2), L_Frame(:, 3))
         hold on
