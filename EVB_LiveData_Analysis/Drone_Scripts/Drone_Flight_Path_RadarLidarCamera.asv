@@ -1,36 +1,35 @@
 close all; clear all; clc;
+rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
+[csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
 
 
 %% ROTATOR LOCATION
-
-save_figs = 0;
+clear v;
+save_figs = 1;
 video = 1;
 data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45159;       % North is positive
 ref_lon = -111.21090;     % West is negative
-ref_direction = 104;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
+ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = 3.5;
+t_offset = 5.5;
 
 
 
 %% Load Data
-rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
-C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+1%7*60*60+1;
+C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+6000.75;
 C_dir = [rospath '\CameraData'];
 C_Frames = dir(C_dir);
 
-L_Time = load([rospath '\Lidar_Time.mat']).Time(:, 2)+1%7*60*60+1;
+L_Time = load([rospath '\Lidar_Time.mat']).Time(:, 2)+6000.75;
 L_dir = [rospath '\LidarData'];
 L_Frames = dir(L_dir);
 
-R_Time = load([rospath '\radar_Time.mat']).Time(:, 2)+1%7*60*60+1;
+R_Time = load([rospath '\radar_Time.mat']).Time(:, 2)+6000.75;
 R_dir = [rospath '\radar'];
 R_Frames = dir(R_dir);
 
-
-[csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
 
 
 test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
@@ -56,7 +55,7 @@ t1 = data.datetime_utc_(1);
 idxsame = find(data.datetime_utc_(1:10) == t1);
 offset = (10-length(idxsame));
 data.time_millisecond_ = data.time_millisecond_ - data.time_millisecond_(1);
-data.UTC_seconds = data.datetime_utc_(1) + seconds(data.time_millisecond_ + offset*100)/1000;
+data.UTC_seconds = data.datetime_utc_(1) + seconds(data.time_millisecond_ + 4 + offset*100)/1000;
 data.UTC_seconds.Format = 'yyyy-MM-dd HH:mm:ss.SSS';
 data.UTC_seconds = posixtime(data.UTC_seconds);
 
@@ -84,8 +83,8 @@ angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
 numPoints = length(data.UTC_seconds);
-startk = 1%248;
-endk = numPoints;
+startk = 570%1;
+endk = 1290%numPoints;
 
 %% Setup video writer
 if video
@@ -102,8 +101,8 @@ if video
     antenna_height = 1.2;
     l_pos = [0 0.8 -0.1];
     r_pos = [0 0.8 0.06];
-    l_direction  = 0;
-    r_direction = 0;
+    l_direction  = -5;
+    r_direction = -5;
     
     figure;
     set(gcf, 'WindowState', 'maximized');   % fill the screen completely
@@ -151,14 +150,14 @@ if video
     
     
     % Initialize trails
-    h_trailXY = gobjects(trailLength,1);
+    % h_trailXY = gobjects(trailLength,1);
     % h_trailXZ = gobjects(trailLength,1);
-    for i = 1:trailLength
-        h_trailXY(i) = plot(axXY, nan, nan, 'bo', 'MarkerFaceColor', 'b');
+    % for i = 1:trailLength
+        % h_trailXY(i) = plot(axXY, nan, nan, 'bo', 'MarkerFaceColor', 'b');
         % h_trailXZ(i) = plot(axXZ, nan, nan, 'bo', 'MarkerFaceColor', 'b');
-    end
+    % end
     
-    h_markerXY = plot(axXY, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
+    % h_markerXY = plot(axXY, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
     % h_markerXZ = plot(axXZ, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
     h_beamXY = plot(axXY, nan, nan, 'r--', 'LineWidth', 2);
     % h_beamXZ = plot(axXZ, nan, nan, 'r--', 'LineWidth', 2);
@@ -173,7 +172,11 @@ if video
     
     for k = startk:endk
         % Find matching antenna frame
-        [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
+        diff = antenna_time - data.UTC_seconds(k);
+        nonnegative_idx = find(diff>=0);
+        [a, Irel] = min(diff(nonnegative_idx));
+        I = nonnegative_idx(Irel);
+        % [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
         df_file = I;
         if a<4
             curr_az = deg2rad(AF_ITP_results(I, 1));
@@ -195,15 +198,19 @@ if video
         %%% DO THIS FOR LIDAR, CAMERA, RADAR
     
         [~, I] = min(abs(L_Time - data.UTC_seconds(k)));
+        LI = I;
         L_Frame = load([L_dir '\Frame_' num2str(I) '.mat']);
         [xtemp ytemp] = deal(cosd(l_direction)*L_Frame.X - sind(l_direction)*L_Frame.Y + l_pos(1), sind(l_direction)*L_Frame.X + cosd(l_direction)*L_Frame.Y + l_pos(2));
         L_Frame = [xtemp, ytemp, L_Frame.Z+l_pos(3)];
     
     
         [~, I] = min(abs(R_Time - data.UTC_seconds(k)));
+        RI = I;
         R_Frame = load([R_dir '\Frame_' num2str(I) '.mat']);
         [xtemp ytemp] = deal(cosd(r_direction)*R_Frame.X - sind(r_direction)*R_Frame.Y + r_pos(1), sind(r_direction)*R_Frame.X + cosd(r_direction)*R_Frame.Y + r_pos(2));
         R_Frame = [xtemp, ytemp, R_Frame.Z+r_pos(3)];
+        good_r = find(R_Frame(:, 1)<60 & abs(R_Frame(:, 2))<30 & R_Frame(:, 3)>-1);
+        R_Frame = R_Frame(good_r, :);
     
     
         [~, I] = min(abs(C_Time - data.UTC_seconds(k)));
@@ -233,29 +240,29 @@ if video
         for i = 1:trailLength
             if i <= length(trailIdx)
                 idx = trailIdx(i);
-                sizeFactor = baseSize / (length(trailIdx) - i + 1);
-                set(h_trailXY(i), 'XData', data.x(idx), 'YData', data.y(idx), 'MarkerSize', sizeFactor/6);
+                % sizeFactor = baseSize / (length(trailIdx) - i + 1);
+                % set(h_trailXY(i), 'XData', data.x(idx), 'YData', data.y(idx), 'MarkerSize', sizeFactor/6);
                 % set(h_trailXZ(i), 'XData', data.x(idx), 'YData', data.z(idx), 'MarkerSize', sizeFactor/6);
             else
-                set(h_trailXY(i), 'XData', nan, 'YData', nan);
+                % set(h_trailXY(i), 'XData', nan, 'YData', nan);
                 % set(h_trailXZ(i), 'XData', nan, 'YData', nan);
             end
         end
     
         % Update drone marker
-        set(h_markerXY, 'XData', data.x(k), 'YData', data.y(k));
+        % set(h_markerXY, 'XData', data.x(k), 'YData', data.y(k));
         % set(h_markerXZ, 'XData', data.x(k), 'YData', data.z(k));
     
         % Altitude label in XY plot
-        set(h_text, 'Position', [data.x(k)+1, data.y(k)-1], ...
-            'String', sprintf('Alt: %.1f m', data.z(k)));
+        % set(h_text, 'Position', [data.x(k)+1, data.y(k)-1], ...
+        %     'String', sprintf('Alt: %.1f m', data.z(k)));
     
     
         uistack(h_beamXY, 'top');
         % uistack(h_beamXZ, 'top');
-        uistack(h_markerXY, 'top');
+        % uistack(h_markerXY, 'top');
         % uistack(h_markerXZ, 'top');
-        uistack(h_trailXY, 'top');
+        % uistack(h_trailXY, 'top');
         % uistack(h_trailXZ, 'top');
         % Range window around drone
         delta = 30;
@@ -273,8 +280,8 @@ if video
         % ylim(axRL, [data.z(k) - delta, data.z(k) + delta]);
     
         
-        if k == 1
-            legend(axXY, [h_trailXY(end), h_beamXY, h_lidarXY, h_radarXY], {'Drone Position (GPS Estimation)', 'Antenna DF Results', 'Lidar', 'Radar'}, 'Location', 'northeast');
+        if k == startk
+            legend(axXY, [h_beamXY, h_lidarXY, h_radarXY], { 'Antenna DF Results', 'Lidar', 'Radar'}, 'Location', 'northeast');
             % legend(axXZ, [h_trailXZ(end), h_beamXZ], {'Drone Altitude', 'Antenna DF Results'}, 'Location', 'northeast');
             % legend(axRL, [h_lidarXY, h_radarXY], {'Lidar', 'Radar'}, 'Location', 'northeast');
         end
@@ -284,11 +291,11 @@ if video
     
     
         drawnow;
-        pause(0.1);
+        % pause(0.1);
         
         frame = getframe(gcf);
         writeVideo(v, frame);
-        sgtitle(['t = ' num2str(dt(k) - dt(startk)) ' s;    DF File: ' num2str(df_file)])
+        sgtitle(['Time = ' num2str(dt(k) - dt(startk)) ' s;    DF File: ' num2str(df_file) ';    Drone GPS Tick = ' num2str(k) ';    Radar Frame = ' num2str(RI) ';    Lidar Frame = ' num2str(LI)])
     end
     
     close(v);
@@ -507,13 +514,13 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
 figure(17)
-scatter(data.x(1:5:end), data.y(1:5:end))
+scatter(data.x(startk:10:endk), data.y(startk:10:endk))
 hold on
-for i = 1:5:numPoints - 1
+for i = startk:10:endk - 10
     x1 = data.x(i);
     y1 = data.y(i);
-    x2 = data.x(i+1);
-    y2 = data.y(i+1);
+    x2 = data.x(i+10);
+    y2 = data.y(i+10);
     line([x1 x2], [y1 y2], 'Color', [1 0 0 0.3], 'LineWidth', 1);  % Simulated transparency
     vec = [x2 - x1, y2 - y1];
     vec = vec / norm(vec);  % Normalize
@@ -531,7 +538,7 @@ end
 % end
 xlabel('X (m)')
 ylabel('Y (m)')
-title('Signal Path')
+title('Drone Path')
 grid on
 set(gcf, 'Position', [100, 100, 1400, 700]);
 
@@ -552,39 +559,8 @@ if save_figs
     saveas(figure(13), fullfile(path, 'Power.jpeg'));
     saveas(figure(14), fullfile(path, 'Error_vs_Distance.jpeg'));
     saveas(figure(15), fullfile(path, 'Error_vs_GT.jpeg'));
-    saveas(figure(16), fullfile(path, 'Path.jpeg'));
+    saveas(figure(17), fullfile(path, 'Path.jpeg'));
 
 
 end
 
-% frame_start = 1436;
-% frame_end = 1850;
-% ROI = [35 45 -5 5 -5 5];
-% 
-% for frame = frame_start:frame_end
-%     frame
-%     radar2 = load([R_dir '\Frame_' num2str(frame) '.mat']);
-%     R_Frame = pointCloud([radar2.X,radar2.Y,radar2.Z],'Intensity',radar2.amplitude,'Normal',[radar2.doppler_org,radar2.velocity,radar2.SINR]);
-%     ind = findPointsInROI(R_Frame,ROI); % Find points that are in the roi
-%     R_Frame = select(R_Frame,ind); % select the points
-%     ind = find(abs(R_Frame.Normal(:, 2))>0);
-%     R_Frame = select(R_Frame, ind);
-%     [~, ind] = max(R_Frame.Intensity);
-% 
-%     [a, I] = min(abs(R_Time(frame) - data.UTC_seconds));
-%     if R_Frame.Count>0
-% 
-% 
-%         radar_drone(frame - frame_start + 1, :) = [R_Frame.Location(ind, :)];
-% 
-%     else
-%         radar_drone(frame-frame_start+1, :) = [NaN NaN NaN];
-% 
-%     end
-% 
-%     if ~isnan(radar_drone(frame-frame_start+1, :))
-%         ROI = [radar_drone(frame - frame_start + 1, 1)-10 radar_drone(frame - frame_start + 1, 1)+10 radar_drone(frame - frame_start + 1, 2)-5 radar_drone(frame - frame_start + 1, 2)+5 radar_drone(frame - frame_start + 1, 3)-1 radar_drone(frame - frame_start + 1, 3)+10];
-%     end
-% end
-% 
-% plot(radar_drone(:, 1), radar_drone(:, 2))

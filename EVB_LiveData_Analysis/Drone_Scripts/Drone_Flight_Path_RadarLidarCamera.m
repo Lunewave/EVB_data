@@ -13,20 +13,20 @@ ref_lon = -111.21090;     % West is negative
 ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = 5;
+t_offset = 3.5;
 
-
+controller_loc = [30 -5];
 
 %% Load Data
-C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+6001.5%+1*60*60+1;
+C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+5998.75;
 C_dir = [rospath '\CameraData'];
 C_Frames = dir(C_dir);
 
-L_Time = load([rospath '\Lidar_Time.mat']).Time(:, 2)+6001.5%+1*60*60+1;
+L_Time = load([rospath '\Lidar_Time.mat']).Time(:, 2)+5998.75;
 L_dir = [rospath '\LidarData'];
 L_Frames = dir(L_dir);
 
-R_Time = load([rospath '\radar_Time.mat']).Time(:, 2)+6001.5%+1*60*60+1;
+R_Time = load([rospath '\radar_Time.mat']).Time(:, 2)+5998.75;
 R_dir = [rospath '\radar'];
 R_Frames = dir(R_dir);
 
@@ -55,7 +55,7 @@ t1 = data.datetime_utc_(1);
 idxsame = find(data.datetime_utc_(1:10) == t1);
 offset = (10-length(idxsame));
 data.time_millisecond_ = data.time_millisecond_ - data.time_millisecond_(1);
-data.UTC_seconds = data.datetime_utc_(1) + seconds(data.time_millisecond_ + offset*100)/1000;
+data.UTC_seconds = data.datetime_utc_(1) + seconds(data.time_millisecond_ + 4 + offset*100)/1000;
 data.UTC_seconds.Format = 'yyyy-MM-dd HH:mm:ss.SSS';
 data.UTC_seconds = posixtime(data.UTC_seconds);
 
@@ -84,7 +84,7 @@ AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
 numPoints = length(data.UTC_seconds);
 startk = 570%1;
-endk = 1290%numPoints;
+endk = 1230%numPoints;
 
 %% Setup video writer
 if video
@@ -122,6 +122,7 @@ if video
     xlim(xlimVals); ylim(ylimVals);
     hold on;
     surf(axXY, sX, sY, sZ + antenna_height);
+    text(controller_loc(1), controller_loc(2), 'Drone Controller')
     
     % % Subplot 2: XZ View
     % axXZ = nexttile;
@@ -152,10 +153,10 @@ if video
     % Initialize trails
     % h_trailXY = gobjects(trailLength,1);
     % h_trailXZ = gobjects(trailLength,1);
-    for i = 1:trailLength
+    % for i = 1:trailLength
         % h_trailXY(i) = plot(axXY, nan, nan, 'bo', 'MarkerFaceColor', 'b');
         % h_trailXZ(i) = plot(axXZ, nan, nan, 'bo', 'MarkerFaceColor', 'b');
-    end
+    % end
     
     % h_markerXY = plot(axXY, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
     % h_markerXZ = plot(axXZ, nan, nan, 'xk', 'LineWidth', 2, 'MarkerSize', 10);
@@ -170,9 +171,13 @@ if video
     % h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
     
     
-    for k = startk:endk
+    for k = 845%startk:endk
         % Find matching antenna frame
-        [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
+        diff = antenna_time - data.UTC_seconds(k);
+        nonnegative_idx = find(diff>=0);
+        [a, Irel] = min(diff(nonnegative_idx));
+        I = nonnegative_idx(Irel);
+        % [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
         df_file = I;
         if a<4
             curr_az = deg2rad(AF_ITP_results(I, 1));
@@ -194,15 +199,19 @@ if video
         %%% DO THIS FOR LIDAR, CAMERA, RADAR
     
         [~, I] = min(abs(L_Time - data.UTC_seconds(k)));
+        LI = I;
         L_Frame = load([L_dir '\Frame_' num2str(I) '.mat']);
         [xtemp ytemp] = deal(cosd(l_direction)*L_Frame.X - sind(l_direction)*L_Frame.Y + l_pos(1), sind(l_direction)*L_Frame.X + cosd(l_direction)*L_Frame.Y + l_pos(2));
         L_Frame = [xtemp, ytemp, L_Frame.Z+l_pos(3)];
     
     
         [~, I] = min(abs(R_Time - data.UTC_seconds(k)));
+        RI = I;
         R_Frame = load([R_dir '\Frame_' num2str(I) '.mat']);
         [xtemp ytemp] = deal(cosd(r_direction)*R_Frame.X - sind(r_direction)*R_Frame.Y + r_pos(1), sind(r_direction)*R_Frame.X + cosd(r_direction)*R_Frame.Y + r_pos(2));
-        R_Frame = [xtemp, ytemp, R_Frame.Z+r_pos(3)];
+        R_Frame = [xtemp, ytemp, R_Frame.Z+r_pos(3) R_Frame.velocity];
+        good_r = find(R_Frame(:, 1)<60 & abs(R_Frame(:, 2))<30 & abs(R_Frame(:, 4))>0.0602);
+        R_Frame = R_Frame(good_r, :);
     
     
         [~, I] = min(abs(C_Time - data.UTC_seconds(k)));
@@ -232,7 +241,7 @@ if video
         for i = 1:trailLength
             if i <= length(trailIdx)
                 idx = trailIdx(i);
-                sizeFactor = baseSize / (length(trailIdx) - i + 1);
+                % sizeFactor = baseSize / (length(trailIdx) - i + 1);
                 % set(h_trailXY(i), 'XData', data.x(idx), 'YData', data.y(idx), 'MarkerSize', sizeFactor/6);
                 % set(h_trailXZ(i), 'XData', data.x(idx), 'YData', data.z(idx), 'MarkerSize', sizeFactor/6);
             else
@@ -282,12 +291,13 @@ if video
     
     
     
-        drawnow;
         % pause(0.1);
         
+
+        sgtitle(['Time = ' num2str(dt(k) - dt(startk)) ' s;    DF File: ' num2str(df_file) ';    Drone GPS Tick = ' num2str(k) ';    Radar Frame = ' num2str(RI) ';    Lidar Frame = ' num2str(LI)])
+        drawnow;
         frame = getframe(gcf);
         writeVideo(v, frame);
-        sgtitle(['t = ' num2str(dt(k) - dt(startk)) ' s;    DF File: ' num2str(df_file) '; k = ' num2str(k)])
     end
     
     close(v);
