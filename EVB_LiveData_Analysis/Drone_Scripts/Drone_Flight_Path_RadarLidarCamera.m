@@ -7,15 +7,15 @@ rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
 clear v;
 save_figs = 1;
 video = 1;
-data_freq = 2.427; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.45159;       % North is positive
 ref_lon = -111.21090;     % West is negative
 ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = 3.5;
+t_offset = 1.4;
 
-controller_loc = [30 -5];
+controller_loc = [40 -5];
 
 %% Load Data
 C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+5998.75;
@@ -83,8 +83,8 @@ angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
 numPoints = length(data.UTC_seconds);
-startk = 570%1;
-endk = 1230%numPoints;
+startk = 600%1;
+endk = 1310%numPoints;
 
 %% Setup video writer
 if video
@@ -101,8 +101,8 @@ if video
     antenna_height = 1.2;
     l_pos = [0 0.8 -0.1];
     r_pos = [0 0.8 0.06];
-    l_direction  = -5;
-    r_direction = -5;
+    l_direction  = -7;
+    r_direction = -7;
     
     figure;
     set(gcf, 'WindowState', 'maximized');   % fill the screen completely
@@ -171,7 +171,7 @@ if video
     % h_radarXZ = plot(axRL, nan, nan, 'm.', 'MarkerSize', 10);
     
     
-    for k = 845%startk:endk
+    for k = startk:endk
         % Find matching antenna frame
         diff = antenna_time - data.UTC_seconds(k);
         nonnegative_idx = find(diff>=0);
