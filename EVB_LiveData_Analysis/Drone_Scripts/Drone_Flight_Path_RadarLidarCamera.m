@@ -6,8 +6,8 @@ rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
 %% ROTATOR LOCATION
 clear v;
 save_figs = 1;
-video = 1;
-data_freq = 2.447; %Frequency of test data signal in GHz
+video = 0;
+data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45159;       % North is positive
 ref_lon = -111.21090;     % West is negative
 ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
@@ -83,8 +83,8 @@ angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
 numPoints = length(data.UTC_seconds);
-startk = 600%1;
-endk = 1310%numPoints;
+startk = 570%1;
+endk = 1230%numPoints;
 
 %% Setup video writer
 if video
@@ -404,6 +404,7 @@ for i = 1:6
     ylabel('SNR (dB)')
     xlabel('Distance (m)')
     ylim([0 55])
+    xlim([0 80])
     title(['Antenna ' num2str(i)])
     grid on
 end
@@ -443,6 +444,7 @@ for i = 1:6
     ylabel('Power')
     xlabel('Distance (m)')
     ylim([0 2.5*10^4])
+    xlim([0 80])
     title(['Antenna ' num2str(i)])
     grid on
     legend('Raw Data', '1/r^{2} Fit', eqnStr, rsquare, 'Location', 'best')

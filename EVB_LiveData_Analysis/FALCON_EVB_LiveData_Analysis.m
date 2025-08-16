@@ -3,7 +3,7 @@ close all; clear all; clc;
 save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading104E\Square_2.447GHz';
+testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.447; %Frequency of test data signal in GHz
+data_freq = 2.427; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
@@ -220,9 +220,22 @@ if save_figs
 end
 
 
+figure(101)
+tiledlayout(1, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+nexttile
+scatter(180:-5:-180, abs(mod(AF_ITP_results(:, 1) - (180:-5:-180)' + 180, 360)-180))
+xlabel('Azimuth (deg)')
+ylabel('Azimuth Error')
+legend(['Mean: ' num2str(mean(abs(mod(AF_ITP_results(:, 1) - (180:-5:-180)' + 180, 360)-180), 'omitnan'))])
+nexttile
+scatter(180:-5:-180, abs(mod(AF_ITP_results(:, 2) + 180, 360)-180-42))
+xlabel('Azimuth (deg)')
+ylabel('Elevation Error')
+legend(['Mean: ' num2str(mean(abs(mod(AF_ITP_results(:, 2) + 180, 360)-180-42), 'omitnan'))])
+set(gcf, 'position', [100 , 100, 1400, 800])
 
 
 
 
 
-
+std(abs(mod(AF_ITP_results(:, 2) + 180, 360)-180), 'omitnan')

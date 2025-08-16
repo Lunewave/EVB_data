@@ -1,0 +1,147 @@
+close all; clear all; clc;
+
+save_figs = 1;
+frequency = 2456; %MHz
+test_location = 'Drone Test';
+noise_level_test = 45;
+testpath = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading95E_RLCDir_-7\Figure8_2.427GHz';
+
+%%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
+AZ_start = 180; AZ_end = -180; AZ_step = -3;
+EL_start = 66; EL_end = 0; EL_step = -3;
+AZ_data = AZ_start:AZ_step:AZ_end;
+AZ_steps = length(AZ_data);
+EL_data = EL_start:EL_step:EL_end;
+EL_steps = length(EL_data);
+numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
+%%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
+lib_location = 'Calibration Library';
+noise_level_cal = 45;
+libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
+offset = 0;
+lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
+if isfile(lib_cache)
+    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+else
+    [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data(libpath, AZ_steps, EL_steps, offset);
+    save(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex');
+end
+%%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
+offset = 0;
+data_freq = [2.4218 2.4312] ; % Frequency of test data signal in GHz
+test_cache = fullfile(testpath, [num2str(data_freq(1)) '-' num2str(data_freq(2)) 'GHz_cached_test_data.mat']);
+if isfile(test_cache)
+    load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'freq_range');
+else
+    [Test_Mag, Test_Phase, Test_Complex, num_files, freq_range] = Load_FALCON_EVB_LiveData_Multi_Frequency(testpath, offset, data_freq);
+    save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'freq_range');
+end
+
+%% Angle Finding with Interpolation
+%%%%%%%%%%%%  DF code  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+AZ_table=AZ_data;
+EL_table=[EL_start:EL_step:EL_end];
+length_el=length(EL_table);
+length_az=length(AZ_table);
+AF_results = NaN(num_files,length(freq_range), 2);
+AF_ITP_results = NaN(num_files,length(freq_range), 2);
+for ifile = 1:num_files   %-140:2:140;                     % object AZ angle input   [-140:140]
+        disp(ifile)
+        for frequency = 1:length(freq_range)
+    
+            %Test vector
+            test=squeeze(Test_Complex(:, ifile,frequency)); 
+            if any(isnan(test))
+                AF_results(ifile,frequency,:) = [NaN NaN];
+                AF_ITP_results(ifile,frequency,:) = [NaN NaN];
+            else
+                weighting=[1 1 1 1 1 1];
+                for az=1:AZ_steps
+                    for el=1:EL_steps
+                        r=corrcoef(test.*weighting,squeeze(Lib_Complex(:,az,el)).*weighting);
+                        coe(az,el)=r(1,2);
+                    end
+                end
+                cf_reshape=reshape(abs(coe),[length_az length_el]);
+                % Find peaks and use max peak
+                [pks,locs_y,locs_x]=peaks2(abs(coe),'MinPeakHeight',0.0,'MinPeakDistance',10);
+                best_error = inf;
+                numpeaks2check = min(numpeaks2check, length(pks));
+                peaks_az = locs_y(1:numpeaks2check);
+                peaks_el = locs_x(1:numpeaks2check);
+                az_angs = AZ_step*(peaks_az-1) + AZ_start;
+                el_angs = EL_start + EL_step*(peaks_el-1);
+                for i = 1:numpeaks2check
+                    peak_az = locs_y(i);
+                    peak_el = locs_x(i);
+                     % Define Azimuth Neighborhood w/o wrapping
+                    delta_az = 0; % Assume no interpolation
+                    if peak_az > 1 && peak_az < length_az %&& obj_az_input > AZ_start && obj_az_input < AZ_end
+                        a = cf_reshape(peak_az - 1, peak_el);
+                        b = cf_reshape(peak_az, peak_el);
+                        c = cf_reshape(peak_az + 1, peak_el);
+                        if (a ~= c)
+                            delta_az = 0.5 * (a - c) / (a - 2*b + c);
+                        end
+                    end
+                    % Define Elevation Neighborhood w/o wrapping
+                    delta_el = 0; % Assume no interpolation
+                    if peak_el > 1 && peak_el < length_el %&& obj_el_input < EL_start && obj_el_input > EL_end
+                        a1 = cf_reshape(peak_az, peak_el - 1);
+                        b1 = cf_reshape(peak_az, peak_el);
+                        c1 = cf_reshape(peak_az, peak_el + 1);
+                        if (a1 ~= c1)
+                            delta_el = 0.5 * (a1 - c1) / (a1 - 2*b1 + c1);
+                        end
+                    end
+                    % Initial uninterpolated peak positions
+                    AZ_peak(i) = AZ_table(peak_az);
+                    EL_peak(i) = EL_table(peak_el);
+                    % Final interpolated peak positions
+                    AZ_peak_itp(i) = AZ_peak(i) + delta_az * AZ_step;
+                    EL_peak_itp(i) = EL_peak(i) + delta_el * EL_step;
+                end
+                % Save results
+                AF_results(ifile,frequency,:) = [AZ_peak(1) EL_peak(1)];
+                AF_ITP_results(ifile,frequency,:) = [AZ_peak_itp(1) EL_peak_itp(1)];
+            end
+        end
+end
+
+
+
+
+AF_results=mod(AF_results+180,360)-180;
+AF_ITP_results=mod(AF_ITP_results+180,360)-180;
+
+
+
+AF_results_median = squeeze(median(AF_results, 2, 'omitnan'));
+AF_ITP_results_median = squeeze(median(AF_ITP_results, 2, 'omitnan'));
+
+
+figure(1)
+tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+nexttile
+scatter(1:num_files, AF_ITP_results(:, :, 1)')
+xlabel('File')
+ylabel('Azimuth (deg)')
+title('Azimuth Results Before Median')
+nexttile
+scatter(1:num_files, AF_ITP_results(:, :, 2)')
+xlabel('File')
+ylabel('Elevation (deg)')
+title('Elevation Results Before Median')
+nexttile
+plot(1:num_files, AF_ITP_results_median(:, 1)', 'o-')
+xlabel('File')
+ylabel('Azimuth (deg)')
+title('Azimuth Results After Median')
+nexttile
+plot(1:num_files, AF_ITP_results_median(:, 2)', 'o-')
+xlabel('File')
+ylabel('Elevation (deg)')
+title('Elevation Results After Median')
+
+
+

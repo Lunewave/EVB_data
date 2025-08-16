@@ -6,13 +6,13 @@ rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
 %% ROTATOR LOCATION
 clear v;
 save_figs = 1;
-data_freq = 2.447; %Frequency of test data signal in GHz
+data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45159;       % North is positive
 ref_lon = -111.21090;     % West is negative
 ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = 1.4;
+t_offset = 3.5;
 
 
 
@@ -179,7 +179,7 @@ nexttile
 scatter(sqrt(LidarGT(:, 1).^2 + LidarGT(:, 2).^2 + LidarGT(:, 3).^2), abs(lidar_el - AF_ITP_results(:, 2)));
 xlabel('Distance ($\sqrt{x^2 + y^2 + z^2}$) (m)', 'Interpreter', 'latex')
 ylabel('Elevation Error abs(DF - Lidar GT) (deg)', 'Interpreter','latex')
-legend(['Mean: ' num2str(mean(abs(lidar_az - AF_ITP_results(:, 2)), 'omitnan'))])
+legend(['Mean: ' num2str(mean(abs(lidar_el - AF_ITP_results(:, 2)), 'omitnan'))])
 set(gcf, 'position', [100 , 100, 1400, 800])
 sgtitle('Angle Error vs Distance', 'Interpreter', 'latex')
 

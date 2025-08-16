@@ -3,7 +3,7 @@
 
 
 clear all;close all;clc;
-path = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading104E\Square_2.447GHz\';
+path = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading95E_RLCDir_-7\Figure8_2.427GHz\';
 frame = 5;
 
 DMA=1;
