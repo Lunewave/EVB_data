@@ -3,10 +3,10 @@ close all; clear all; clc;
 save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
+testpath = 'U:\Falcon_Project\20250811_MaranaDroneTest_32.45159N_111.21090W_Heading95E_RLCDir_-7\Figure8_2.427GHz';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
-AZ_start = 180; AZ_end = -180; AZ_step = -3;
+AZ_start = -180; AZ_end = 180; AZ_step = 3;
 EL_start = 66; EL_end = 0; EL_step = -3;
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -280,8 +280,6 @@ diff = testdif - libdif;
 
 figure(103)
 tiledlayout(1, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
-
-% --- Test signal differences ---
 nexttile
 plot(testdif', 'o-')
 grid on
@@ -289,18 +287,7 @@ ylabel('Magnitude (dB)')
 xlabel('File')
 xlim([1 length(AF_results)])
 title('Test Signal Magnitude Difference vs File')
-
-% Build legend as cell array
-test_legend = {
-    sprintf('A1 - A6, Mean: %.2f', test_average(1)), 
-    sprintf('A2 - A6, Mean: %.2f', test_average(2)), 
-    sprintf('A3 - A6, Mean: %.2f', test_average(3)), 
-    sprintf('A4 - A6, Mean: %.2f', test_average(4)), 
-    sprintf('A5 - A6, Mean: %.2f', test_average(5))
-};
-legend(test_legend, 'Location', 'best')
-
-% --- Library signal differences ---
+legend(['A1 - A6, Mean: ' num2str(test_average(1)), 'A2 - A6, Mean: ' num2str(test_average(2)), 'A3 - A6, Mean: ' num2str(test_average(3)), 'A4 - A6, Mean: ' num2str(test_average(4)), 'A5 - A6, Mean: ' num2str(test_average(5))], 'location', 'best')
 nexttile
 plot(libdif', 'o-')
 grid on
@@ -308,19 +295,8 @@ ylabel('Magnitude (dB)')
 xlabel('File')
 xlim([1 length(AF_results)])
 title('Library Signal Magnitude Difference vs File')
-
-% Build legend as cell array
-lib_legend = {
-    sprintf('A1 - A6, Mean: %.2f', lib_average(1)), 
-    sprintf('A2 - A6, Mean: %.2f', lib_average(2)), 
-    sprintf('A3 - A6, Mean: %.2f', lib_average(3)), 
-    sprintf('A4 - A6, Mean: %.2f', lib_average(4)), 
-    sprintf('A5 - A6, Mean: %.2f', lib_average(5))
-};
-legend(lib_legend, 'Location', 'best')
-
+legend(['A1 - A6, Mean: ' num2str(lib_average(1)), 'A2 - A6, Mean: ' num2str(lib_average(2)), 'A3 - A6, Mean: ' num2str(lib_average(3)), 'A4 - A6, Mean: ' num2str(lib_average(4)), 'A5 - A6, Mean: ' num2str(lib_average(5))], 'location', 'best')
 set(gcf, 'Position', [100, 100, 1400, 700]);
-
 
 
 figure(104)
@@ -359,8 +335,8 @@ h = heatmap(1:num_ant, 1:num_ant, rms_residuals, ...
     'Colormap', parula, 'ColorbarVisible','on');
 h.XLabel = 'Antenna j';
 h.YLabel = 'Antenna i';
-h.Title = 'Signed Average Difference: (Test(i)-Test(j)) - (Lib(i)-Lib(j))';
-h.ColorLimits = [-5 5];
+h.Title = 'RMS Residuals: (Test(i)-Test(j)) - (Lib(i)-Lib(j))';
+h.ColorLimits = [0 5];
 
 
 

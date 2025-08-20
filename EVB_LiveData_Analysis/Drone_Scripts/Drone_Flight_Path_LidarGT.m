@@ -6,7 +6,6 @@ rospath = uigetdir('U:\Falcon_Project\', 'Select Processed ROS bag data');
 %% ROTATOR LOCATION
 clear v;
 save_figs = 1;
-data_freq = 2.427; %Frequency of test data signal in GHz
 ref_lat = 32.45159;       % North is positive
 ref_lon = -111.21090;     % West is negative
 ref_direction = 95;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
@@ -14,7 +13,7 @@ noise_level_test = 45;
 
 t_offset = 3.5;
 
-
+multiple_freqs = 0
 
 %% Load Data
 C_Time = load([rospath '\Camera_Time.mat']).Time(:, 2)+5998.75+64*.05;
@@ -30,8 +29,13 @@ R_dir = [rospath '\radar'];
 R_Frames = dir(R_dir);
 
 
-
-test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
+if multiple_freqs
+    data_freq = [2.4218 2.4312] ; % Frequency of test data signal in GHz
+    test_cache = fullfile(testpath, [num2str(data_freq(1)) '-' num2str(data_freq(2)) 'GHz_cached_test_data.mat']);
+else
+    data_freq = 2.427; %Frequency of test data signal in GHz
+    test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
+end
 load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 
 

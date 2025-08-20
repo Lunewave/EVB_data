@@ -46,6 +46,9 @@ else
     [Test_Mag, Test_Phase, Test_Complex] = Load_FALCON_EVB_Data(testpath, AZ_steps, EL_steps, offset, data_freq/1000);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');
 end
+Test_Mag = Lib_Mag;
+Test_Phase = Lib_Phase;
+Test_Complex = Lib_Complex;
 
 
 %% Plot Antenna Patterns
