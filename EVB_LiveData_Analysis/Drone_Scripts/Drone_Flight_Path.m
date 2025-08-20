@@ -4,13 +4,13 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 1;
-data_freq = 2.427; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 ref_lat = 32.45130;       % North is positive
 ref_lon = -111.21116;     % West is negative
 % ref_direction = 92;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = 3.5;
+t_offset = 2;
 
 %% Load Data
 [csv, path] = uigetfile('U:\Falcon_Project\*.csv', 'Select CSV Flight Record');
@@ -59,7 +59,7 @@ data.z = data.z(good_idx);
 data.UTC_seconds = data.UTC_seconds(good_idx);
 
 
-angle_offset = -5%rad2deg(atan2(data.y(1), data.x(1)));
+angle_offset = rad2deg(atan2(data.y(1), data.x(1)));
 % angle_offset = mod(90 - ref_direction, 360);
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 
@@ -238,94 +238,94 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
 
-figure(12)
-sgtitle(['6 Antenna SNR (Noise Level = ' num2str(noise_level_test) ' dB)'])
-for i = 1:6
-    subplot(2, 3, i)
-    scatter(drone_loc(:, 3), Test_Mag(i, :)-noise_level_test)
+% figure(12)
+% sgtitle(['6 Antenna SNR (Noise Level = ' num2str(noise_level_test) ' dB)'])
+% for i = 1:6
+%     subplot(2, 3, i)
+%     scatter(drone_loc(:, 3), Test_Mag(i, :)-noise_level_test)
+% 
+%     [~, sorted_idx] = sort(drone_loc(:, 3));
+%     drone_distance_sort = drone_loc(sorted_idx, 3);
+%     SNR = (Test_Mag(i, :)-noise_level_test)';
+%     SNR_sorted = SNR(sorted_idx);
+% 
+%     hold on
+%     X = 1 ./ drone_distance_sort;        % compute 1/r
+%     Y = SNR_sorted;
+%     validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+%     X = X(validIdx);
+%     Y = Y(validIdx);
+% 
+% 
+%     p = polyfit(X, Y, 1);
+%     Y_fit = polyval(p, X);
+% 
+%     % Compute R^2
+%     SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+%     SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+%     R_squared = 1 - (SS_res / SS_tot);
+% 
+%     plot(1./X, Y_fit)
+%     eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
+%     rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
+%     plot(NaN, NaN, 'w')
+%     plot(NaN, NaN, 'w')
+% 
+%     ylabel('Power')
+%     xlabel('Distance (m)')
+%     ylim([0 2.5*10^4])
+%     title(['Antenna ' num2str(i)])
+%     grid on
+%     legend('Raw Data', '1/r Fit', eqnStr, rsquare, 'Location', 'best')
+% 
+% 
+%     ylabel('SNR (dB)')
+%     xlabel('Distance (m)')
+%     ylim([0 55])
+%     title(['Antenna ' num2str(i)])
+%     grid on
+% end
+% set(gcf, 'Position', [100, 100, 1400, 700]);
 
-    [~, sorted_idx] = sort(drone_loc(:, 3));
-    drone_distance_sort = drone_loc(sorted_idx, 3);
-    SNR = (Test_Mag(i, :)-noise_level_test)';
-    SNR_sorted = SNR(sorted_idx);
-
-    hold on
-    X = 1 ./ drone_distance_sort;        % compute 1/r
-    Y = SNR_sorted;
-    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
-    X = X(validIdx);
-    Y = Y(validIdx);
-
-
-    p = polyfit(X, Y, 1);
-    Y_fit = polyval(p, X);
-
-    % Compute R^2
-    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
-    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
-    R_squared = 1 - (SS_res / SS_tot);
-
-    plot(1./X, Y_fit)
-    eqnStr = sprintf('Fit: P = %.2f / r + %.3f', p(1), p(2));
-    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
-    plot(NaN, NaN, 'w')
-    plot(NaN, NaN, 'w')
-
-    ylabel('Power')
-    xlabel('Distance (m)')
-    ylim([0 2.5*10^4])
-    title(['Antenna ' num2str(i)])
-    grid on
-    legend('Raw Data', '1/r Fit', eqnStr, rsquare, 'Location', 'best')
-
-
-    ylabel('SNR (dB)')
-    xlabel('Distance (m)')
-    ylim([0 55])
-    title(['Antenna ' num2str(i)])
-    grid on
-end
-set(gcf, 'Position', [100, 100, 1400, 700]);
-
-figure(13)
-sgtitle('6 Antenna Power Level')
-for i = 1:6
-    subplot(2, 3, i)
-    scatter(drone_loc(:, 3), 10.^(Test_Mag(i, :)/20))
-
-    [~, sorted_idx] = sort(drone_loc(:, 3));
-    drone_distance_sort = drone_loc(sorted_idx, 3);
-    mag_sorted = 10.^(Test_Mag(i, sorted_idx)/20)';
-
-    hold on
-    X = 1 ./ drone_distance_sort.^2;        % compute 1/r^2
-    Y = mag_sorted;
-    validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
-    X = X(validIdx);
-    Y = Y(validIdx);
-
-
-    p = polyfit(X, Y, 1);
-    Y_fit = polyval(p, X);
-
-    % Compute R^2
-    SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
-    SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
-    R_squared = 1 - (SS_res / SS_tot);
-
-    plot(sqrt(1./X), Y_fit)
-    eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
-    rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
-    plot(NaN, NaN, 'w')
-    plot(NaN, NaN, 'w')
-    ylabel('Power')
-    xlabel('Distance (m)')
-    ylim([0 2.5*10^4])
-    title(['Antenna ' num2str(i)])
-    grid on
-    legend('Raw Data', '1/r^{2} Fit', eqnStr, rsquare, 'Location', 'best')
-end
-set(gcf, 'Position', [100, 100, 1400, 700]);
+% figure(13)
+% sgtitle('6 Antenna Power Level')
+% for i = 1:6
+%     subplot(2, 3, i)
+%     scatter(drone_loc(:, 3), 10.^(Test_Mag(i, :)/20))
+% 
+%     [~, sorted_idx] = sort(drone_loc(:, 3));
+%     drone_distance_sort = drone_loc(sorted_idx, 3);
+%     mag_sorted = 10.^(Test_Mag(i, sorted_idx)/20)';
+% 
+%     hold on
+%     X = 1 ./ drone_distance_sort.^2;        % compute 1/r^2
+%     Y = mag_sorted;
+%     validIdx = ~isnan(X) & ~isnan(Y) & ~isinf(X) & ~isinf(Y);
+%     X = X(validIdx);
+%     Y = Y(validIdx);
+% 
+% 
+%     p = polyfit(X, Y, 1);
+%     Y_fit = polyval(p, X);
+% 
+%     % Compute R^2
+%     SS_res = sum((Y - Y_fit).^2);         % Residual sum of squares
+%     SS_tot = sum((Y - mean(Y)).^2);       % Total sum of squares
+%     R_squared = 1 - (SS_res / SS_tot);
+% 
+%     plot(sqrt(1./X), Y_fit)
+%     eqnStr = sprintf('Fit: P = %.2f / r^{2} + %.3f', p(1), p(2));
+%     rsquare = sprintf(['R^{2} = ' num2str(R_squared)]);
+%     plot(NaN, NaN, 'w')
+%     plot(NaN, NaN, 'w')
+%     ylabel('Power')
+%     xlabel('Distance (m)')
+%     ylim([0 2.5*10^4])
+%     title(['Antenna ' num2str(i)])
+%     grid on
+%     legend('Raw Data', '1/r^{2} Fit', eqnStr, rsquare, 'Location', 'best')
+% end
+% set(gcf, 'Position', [100, 100, 1400, 700]);
 
 
 
@@ -407,8 +407,8 @@ if save_figs
     end
     saveas(figure(10), fullfile(path, 'Error.jpeg'));
     saveas(figure(11), fullfile(path, 'Full_Flight.jpeg'));
-    saveas(figure(12), fullfile(path, 'SNR.jpeg'));
-    saveas(figure(13), fullfile(path, 'Power.jpeg'));
+    % saveas(figure(12), fullfile(path, 'SNR.jpeg'));
+    % saveas(figure(13), fullfile(path, 'Power.jpeg'));
     saveas(figure(14), fullfile(path, 'Error_vs_Distance.jpeg'));
     saveas(figure(15), fullfile(path, 'Error_vs_GT.jpeg'));
     saveas(figure(16), fullfile(path, 'Path.jpeg'));

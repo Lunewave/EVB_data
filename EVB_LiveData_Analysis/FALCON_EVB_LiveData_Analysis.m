@@ -3,7 +3,7 @@ close all; clear all; clc;
 save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250711_MaranaTest_AZ360_EL0_Step5_withLens_withEVB_2.456GHz_DroneTest_r-10_h-2';
+testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.427; %Frequency of test data signal in GHz
+data_freq = 2.447; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
@@ -36,14 +36,6 @@ else
     [Test_Mag, Test_Phase, Test_Complex, num_files, numgoodframes] = Load_FALCON_EVB_LiveData(testpath, offset, data_freq);
     save(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 end
-
-
-% Test_Mag = reshape(Test_Mag, [6 121*23]);
-% Test_Phase = reshape(Test_Phase, [6 121*23]);
-% Test_Complex = reshape(Test_Complex, [6 121*23]);
-% num_files = 121*23;
-% numgoodframes = 1024*ones(1, 121*23);
-
 
 %% Angle Finding with Interpolation
 %%%%%%%%%%%%  DF code  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
