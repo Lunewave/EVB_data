@@ -4,32 +4,27 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 1;
-data_freq = 2.456; %Frequency of test data signal in GHz
-ref_lat = 32.27019;       % North is positive
-ref_lon = -110.925645;     % West is negative
-ref_direction = 99;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
+data_freq = 2.447; %Frequency of test data signal in GHz
+ref_lat = 32.45130;       % North is positive
+ref_lon = -111.21116;     % West is negative
 noise_level_test = 45;
 
-t_offset = -7.75;
+t_offset = 2;
 
 %% Load Data
-[csv, path] = uigetfile('U:\Direction_Finding\*.csv', 'Select CSV Flight Record');
+csv = 'Jul-29th-2025-10-59AM-Flight-Airdata.csv';
+path = 'U:\Falcon_Project\20250729_MaranaTest_DroneFigure8_32.45130N_111.21116W_2.447GHz_setAngleOffset-5\';
 
 
 test_cache = fullfile(path, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
 
 
-% load([path 'MyTimestamps.mat'])
-% temp = load([path 'MyTimestamps.mat']);
-% fn = fieldnames(temp);
-% antenna_time = temp.(fn{1});
-% antenna_time = posixtime(antenna_time)+t_offset;
-
-M = readmatrix([path 'log.txt']);
-antenna_time = M(:, 2) + t_offset;
-
-
+load([path 'MyTimestamps.mat'])
+temp = load([path 'MyTimestamps.mat']);
+fn = fieldnames(temp);
+antenna_time = temp.(fn{1});
+antenna_time = posixtime(antenna_time)+t_offset;
 load([path 'AF_ITP_results.mat'])
 
 fullpath = fullfile(path, csv);
@@ -64,12 +59,10 @@ data.z = data.z(good_idx);
 data.UTC_seconds = data.UTC_seconds(good_idx);
 
 
-angle_offset = mod(90 - ref_direction, 360); %rad2deg(atan2(data.y(1), data.x(1)));
+angle_offset = -5;
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
-dt = data.UTC_seconds - data.UTC_seconds(1);
 
-startk = 1;
-endk = length(data.x);
+
 
 
 %% Setup video writer
@@ -132,14 +125,10 @@ last_I = NaN;
 
 h_text = text(axXY, nan, nan, '', 'FontSize', 10, 'Color', [0.5 0.5 0.5]);
 
-for k = startk:endk
+for k = 1:1120
     % Find matching antenna frame
-    diff = antenna_time - data.UTC_seconds(k);
-    nonnegative_idx = find(diff>=0);
-    [a, Irel] = min(diff(nonnegative_idx));
-    I = nonnegative_idx(Irel);
-    % [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
-    df_file = I;
+    [a, I] = min(abs(antenna_time - data.UTC_seconds(k)));
+    
     if a<.5
         curr_az = deg2rad(AF_ITP_results(I, 1));
         curr_el = deg2rad(AF_ITP_results(I, 2));
@@ -196,8 +185,7 @@ for k = startk:endk
 
     drawnow;
     pause(0.01);
-    sgtitle(['Time = ' num2str(dt(k) - dt(startk)) ' s;    DF File: ' num2str(df_file) ';    Drone GPS Tick = ' num2str(k) ';'])
-
+    
     frame = getframe(gcf);
     writeVideo(v, frame);
 end
@@ -210,7 +198,7 @@ fprintf('Video saved to: %s\n', videoName);
 
 %% Plot Figures
 drone_az = rad2deg(atan2(data.y, data.x));
-drone_el = rad2deg(atan2(data.z-antenna_height, sqrt(data.x.^2 + data.y.^2)));
+drone_el = rad2deg(atan2(data.z, sqrt(data.x.^2 + data.y.^2)));
 drone_r = sqrt(data.x.^2 + data.y.^2 + data.z.^2);
 
 
@@ -352,8 +340,6 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 % end
 % set(gcf, 'Position', [100, 100, 1400, 700]);
 
-error(:, 1) = mod(error(:, 1) + 180, 360) - 180;
-error(:, 2) = mod(error(:, 2) + 180, 360) - 180;
 
 
 figure(14)

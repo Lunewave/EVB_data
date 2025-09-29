@@ -3,7 +3,7 @@ close all; clear all; clc;
 save_figs = 1;
 test_location = 'Drone Test';
 noise_level_test = 45;
-testpath = 'U:\Falcon_Project\20250729_MaranaTest_HillyAZFOV_32.45130N_111.21116W_2.447';
+testpath = 'U:\Direction_Finding\20250915_ParkingLotDroneTest_udp_output_figure8_2_32.270190N_110.925645W_Heading99E_2.456GHz_toff_-7.75';
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
@@ -28,7 +28,7 @@ else
 end
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 0;
-data_freq = 2.447; %Frequency of test data signal in GHz
+data_freq = 2.456; %Frequency of test data signal in GHz
 test_cache = fullfile(testpath, [num2str(data_freq) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgoodframes');
@@ -203,9 +203,17 @@ libmag = zeros(m, num_files);
 ax_string = strings(1, num_files);
 
 for k = 1:numel(cols)
-    libmag(:, k) = Lib_Mag(:, cols(k), slices(k));
-    ax_string{k} = ['(' num2str(AF_results(k, 1)) ',' num2str(AF_results(k, 2)) ')'];
+    if isnan(cols(k)) || isnan(slices(k))
+        % If either index is NaN, store NaN in libmag
+        libmag(:, k) = NaN;
+        ax_string{k} = '(NaN, NaN)';
+    else
+        % Otherwise, index into Lib_Mag as normal
+        libmag(:, k) = Lib_Mag(:, cols(k), slices(k));
+        ax_string{k} = ['(' num2str(AF_results(k, 1)) ',' num2str(AF_results(k, 2)) ')'];
+    end
 end
+
 
 
 
@@ -345,7 +353,7 @@ for i = 1:num_ant
         end
     end
 end
-rms_residuals = squeeze(mean(residuals, 3)); % antenna × antenna matrix
+rms_residuals = squeeze(mean(residuals, 3, 'omitnan')); % antenna × antenna matrix
 figure(201)
 h = heatmap(1:num_ant, 1:num_ant, rms_residuals, ...
     'Colormap', parula, 'ColorbarVisible','on');

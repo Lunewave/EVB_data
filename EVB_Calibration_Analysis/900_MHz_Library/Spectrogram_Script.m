@@ -3,11 +3,11 @@
 
 
 clear all;close all;clc;
-path = 'U:\Direction_Finding\20250915_ParkingLotDroneTest_udp_output_figure8_2_32.270190N_110.925645W_Heading99E_2.456GHz_toff_-7.75\\';
-frame = 10;
+path = 'U:\Direction_Finding\20250924_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\';
+frame = 2959;
 
 DMA=2;
-num_frames = 0;
+num_frames = 10;
 
 
 for i = frame:frame+num_frames
@@ -63,19 +63,19 @@ for i = frame:frame+num_frames
     
     antenna_order = [5 4 6 1 2 3];
     figure(i+1000)
-    if DMA == 1 | DMA == 2
+    if DMA == 1 | DMA ==2
         % Parameters for spectrogram
         window_size = 1024;         % Length of FFT window
         overlap = round(0.75 * window_size);  % 75% overlap
         nfft = 1024;                % Number of FFT points
         fs = 245.76e6;  % 245.76 MHz
             
-        fc = 2.4e9;  % or whatever center frequency you're using
+        fc = 0.9e9;  % or whatever center frequency you're using
         
         for ch = 2:7
             subplot(2, 3, ch-1);
         
-            signal = C1_cmplex(:, ch);
+            signal = conj(C1_cmplex(:, ch));
         
             [s, f, ~] = spectrogram(signal, window_size, overlap, nfft, fs, 'centered');
             rf_freq = f + fc;
@@ -98,7 +98,7 @@ for i = frame:frame+num_frames
 
     
     else
-        fc = 2.4e9;                     % Center frequency (adjust as needed)
+        fc = 0.9e9;                     % Center frequency (adjust as needed)
         fs = 245.76e6;                  % Sampling rate
         window_size = 1024;
         overlap = 0;                   % No overlap to avoid smearing across bursts
@@ -117,7 +117,7 @@ for i = frame:frame+num_frames
             for burst = 1:num_bursts
                 idx_start = (burst - 1) * samples_per_burst + 1;
                 idx_end   = burst * samples_per_burst;
-                burst_signal = C1_cmplex(idx_start:idx_end, ch);
+                burst_signal = conj(C1_cmplex(idx_start:idx_end, ch));
         
                 [s, f, ~] = spectrogram(burst_signal, window_size, overlap, nfft, fs, 'centered');
         
