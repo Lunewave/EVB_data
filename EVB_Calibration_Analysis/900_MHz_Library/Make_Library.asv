@@ -138,7 +138,7 @@ for antenna_ind=1:6
         grid on; hold on;
         plot([AZ_start:-2:AZ_end], flip(curAntennaAmp(freq_indxs_AZ)));
         % plot([-40:5:40], VNAMag)
-        ylim([40 110])
+        ylim([40])
         xlabel('Azimuth Angle (deg)'); ylabel('Magnitude (dB)');
         title(['Antenna ' int2str(antenna_ind) ' magnitude EL = 0']);
         legend(lib_location, 'Simulation Gain Result 915 MHz', 'VNA Data 900 MHz', 'Location', 'best');
@@ -154,14 +154,14 @@ for antenna_ind=1:6
                   'ForegroundColor', 'k', ...
                   'Tag', 'snr_footer');
 
-        simphase =  unwrap(squeeze(curAntennaPhase(freq_indxs_AZ)), 180) - unwrap(squeeze(csvData.A1.phase(freq_indxs_AZ)), 180);
+        simphase =  flip(unwrap(squeeze(curAntennaPhase(freq_indxs_AZ)), 180) - unwrap(squeeze(csvData.A1.phase(freq_indxs_AZ)), 180));
         dataphase = unwrap(squeeze(Lib_Phase(antenna_ind, :, 23)),180) +shifts1(antenna_ind);
         subplot(1,2,2)
         plot(AZ_data, dataphase - dataphase(end));
         grid on;hold on;
         plot([AZ_start:-2:AZ_end], simphase - simphase(end));
         % plot([-40:5:40], unwrap(squeeze(S21_phase_data_all(antenna_ind, 2, :, end)-S21_phase_data_all(1, 2, :, end)), 180))
-        ylim([-240 240])
+        ylim([-180 180])
         xlabel('Angle (deg)');ylabel('Phase (deg)');
         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
         legend(lib_location, 'Simulation Gain Result 915 MHz', 'VNA Data 900 MHz', 'Location', 'best');
@@ -190,7 +190,7 @@ for antenna_ind=1:6
         grid on; hold on;
         plot([0:2:EL_start], curAntennaAmp(freq_indxs_EL));
         % plot([60:-5:0], VNAMag)
-        ylim([40 110])
+        ylim([-180 180])
         xlabel('Elevation Angle (deg)'); ylabel('Magnitude (dB)');
         title(['Antenna ' int2str(antenna_ind) ' magnitude AZ = 0']);
         legend(lib_location, 'Simulation Gain Result 915 MHz', 'VNA Data 900 MHz', 'Location', 'best');
@@ -213,7 +213,7 @@ for antenna_ind=1:6
         plot([0:2:EL_start], simphase - simphase(1));
         % plot([60:-5:0], unwrap(squeeze(S21_phase_data_all(antenna_ind, 2, 7, :)-S21_phase_data_all(1, 2, 7, :)), 180))
         xlabel('Angle (deg)');ylabel('Phase (deg)');
-        ylim([-240 240])
+        ylim([-180 180])
         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase AZ = 0']);
         legend(lib_location, 'Simulation Gain Result 915 MHz', 'VNA Data 900 MHz', 'Location', 'best');
         set(gcf, 'Position', [100, 100, 1200, 500]);
