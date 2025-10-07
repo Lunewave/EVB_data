@@ -6,64 +6,31 @@ clear all;close all;clc;
 path = 'U:\Direction_Finding\20250924_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\';
 frame = 2959;
 
-DMA=2;
-num_frames = 10;
+num_frames = 0;
 
 
 for i = frame:frame+num_frames
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fileID = fopen([path num2str(i,'%04d') '.BIN'], 'r', 'ieee-le');
-    if DMA == 1
-        C = fread(fileID, Inf, 'int16');fclose(fileID);
-        C0 = reshape(C,[8,length(C)/8]).';
-        L_C0=length(C0);
-    
-        C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
-        C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
-        C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
-        C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
-        C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
-        C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
-        C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
-        C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:); 
-    
-        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
-    elseif DMA == 2
 
-        C = fread(fileID, Inf, 'int16');fclose(fileID);
-        C0 = reshape(C,[2,length(C)/2]).';
-        L_C0=length(C0);
-        
-        C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
-        C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
-        C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
-        C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
-        C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
-        C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
-        C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
-        C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:);
-        
-        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
-    elseif DMA == 0
-        C = fread(fileID, Inf, 'int16');fclose(fileID);
-        C0 = reshape(C,[8,length(C)/8]).';
-        
-        C1= C0 (1:8:end,:).'; C_all(:,1)=C1(:);
-        C2= C0 (2:8:end,:).'; C_all(:,2)=C2(:);
-        C3= C0 (3:8:end,:).'; C_all(:,3)=C3(:);
-        C4= C0 (4:8:end,:).'; C_all(:,4)=C4(:);
-        C5= C0 (5:8:end,:).'; C_all(:,5)=C5(:);
-        C6= C0 (6:8:end,:).'; C_all(:,6)=C6(:);
-        C7= C0 (7:8:end,:).'; C_all(:,7)=C7(:);
-        C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:); 
-        
-        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
-    end
+    C = fread(fileID, Inf, 'int16');fclose(fileID);
+    C0 = reshape(C,[2,length(C)/2]).';
+    L_C0=length(C0);
     
+    C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
+    C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
+    C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
+    C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
+    C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
+    C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
+    C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
+    C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:);
+    
+    C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+
     antenna_order = [5 4 6 1 2 3];
     figure(i+1000)
-    if DMA == 1 | DMA ==2
         % Parameters for spectrogram
         window_size = 1024;         % Length of FFT window
         overlap = round(0.75 * window_size);  % 75% overlap
@@ -72,84 +39,58 @@ for i = frame:frame+num_frames
             
         fc = 0.9e9;  % or whatever center frequency you're using
         
-        for ch = 2:7
-            subplot(2, 3, ch-1);
-        
-            signal = conj(C1_cmplex(:, ch));
-        
-            [s, f, ~] = spectrogram(signal, window_size, overlap, nfft, fs, 'centered');
-            rf_freq = f + fc;
-        
-            % Construct custom x-axis: one label per column in spectrogram
-            num_frames = size(s, 2);
-            frame_numbers = linspace(1, 1024, num_frames);  % span full 1024 frames
-        
-            % Plot spectrogram with RF-aligned y-axis and frame-based x-axis
-            imagesc(frame_numbers, rf_freq(end:-1:1)/1e9, 20*log10(abs(s(end:-1:1, :))));
-            axis xy;
-            title(['Spectrogram - Antenna ' num2str(antenna_order(ch-1))]);
-            xlabel('Frame Number');
-            ylabel('Frequency (GHz)');
-            colormap turbo;
-            colorbar;
-        end
-        
-        sgtitle('Spectrograms of Antennas 1–6 (RF-Aligned by Frame)');
-
+    for ch = 2:7
+        subplot(2, 3, ch-1);
     
-    else
-        fc = 0.9e9;                     % Center frequency (adjust as needed)
-        fs = 245.76e6;                  % Sampling rate
-        window_size = 1024;
-        overlap = 0;                   % No overlap to avoid smearing across bursts
-        nfft = 1024;
-        samples_per_frame = 1024;
-        frames_per_burst = 8;
-        samples_per_burst = samples_per_frame * frames_per_burst;
-        num_bursts = 1024 / frames_per_burst;
-        antenna_order = [5 4 6 1 2 3];
-        
-        for ch = 2:7
-            subplot(2, 3, ch - 1);
-            full_s = [];
-            full_x = [];
-        
-            for burst = 1:num_bursts
-                idx_start = (burst - 1) * samples_per_burst + 1;
-                idx_end   = burst * samples_per_burst;
-                burst_signal = conj(C1_cmplex(idx_start:idx_end, ch));
-        
-                [s, f, ~] = spectrogram(burst_signal, window_size, overlap, nfft, fs, 'centered');
-        
-                % Append results
-                full_s = [full_s, s];
-        
-                % Map time columns of this burst to frame numbers
-                burst_frames = ((burst - 1) * frames_per_burst) + linspace(1, frames_per_burst, size(s, 2));
-                full_x = [full_x, burst_frames];
-            end
-        
-            rf_freq = f + fc;
-        
-            % Plot the combined spectrogram
-            imagesc(full_x, rf_freq(end:-1:1)/1e9, ...
-                    20*log10(abs(full_s(end:-1:1, :))));
-            axis xy;
-            title(['Spectrogram - Antenna ' num2str(antenna_order(ch - 1))]);
-            xlabel('Frame Number');
-            ylabel('Frequency (GHz)');
-            % Force Y-axis ticks every 0.01 GHz
-            ytick_vals = round(min(rf_freq)/1e6)*1e6 : 10e6 : round(max(rf_freq)/1e6)*1e6;
-            yticks(ytick_vals / 1e9);
-            colormap turbo;
-            colorbar;
-        
-            hold on;
-            for k = 8:8:1024
-                % xline(k + 0.5, 'k-', 'LineWidth', 0.5);
-            end
-        end
-        
-        sgtitle('Burst-wise Spectrograms of Antennas 1–6 (No Overlap)');
+        signal = conj(C1_cmplex(:, ch));
+    
+        [s, f, ~] = spectrogram(signal, window_size, overlap, nfft, fs, 'centered');
+        rf_freq = f + fc;
+    
+        % Construct custom x-axis: one label per column in spectrogram
+        num_frames = size(s, 2);
+        frame_numbers = linspace(1, 1024, num_frames);  % span full 1024 frames
+    
+        % Plot spectrogram with RF-aligned y-axis and frame-based x-axis
+        imagesc(frame_numbers, rf_freq(end:-1:1)/1e9, 20*log10(abs(s(end:-1:1, :))));
+        axis xy;
+        title(['Spectrogram - Antenna ' num2str(antenna_order(ch-1))]);
+        xlabel('Frame Number');
+        ylabel('Frequency (GHz)');
+        colormap turbo;
+        colorbar;
     end
+    
+    sgtitle('Spectrograms of Antennas 1–6 (RF-Aligned by Frame)');
+    fre=[0:1023]/1024*fs;
+    a = fre/1e9+(fc - fs/2)/1e9;
+    n = length(fre);
+    a = a(end:-1:1);
+    a = [a(n/2+1:end),a(1:n/2)];
+    [a_sorted, idx] = sort(a, 'ascend');
+
+
+    for frame_ind=1:1024
+        % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
+        freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
+        freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
+        freD=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),4)); %CH4
+        freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5)); %CH5
+        freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
+        freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
+        % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
+    end
+    figure(2)
+    hold on; grid on;
+    plot(a_sorted, mag2db(abs(freB(idx))));
+    plot(a_sorted, mag2db(abs(freC(idx))));
+    plot(a_sorted, mag2db(abs(freD(idx))));
+    plot(a_sorted, mag2db(abs(freE(idx))));
+    plot(a_sorted, mag2db(abs(freF(idx))));
+    plot(a_sorted, mag2db(abs(freG(idx))));
+    % yline(65, '--r', 'Threshold');
+    xlabel('Frequency (GHz)')
+    ylabel('Magnitude (dB)')
+    title(['FFT of file: ' num2str(frame)]);
+    legend('Antenna 5','Antenna 4', 'Antenna 6', 'Antenna 1', 'Antenna 2', 'Antenna 3', 'Location', 'best');
 end
