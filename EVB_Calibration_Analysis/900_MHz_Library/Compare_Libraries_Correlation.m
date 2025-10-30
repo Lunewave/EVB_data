@@ -18,6 +18,8 @@ shifts12 = [0 0 0 0 0 0];
 libpath = 'U:\Direction_Finding\20250924_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL';
 testpath = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL';
 
+
+EL_idx = 23;
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -29,7 +31,7 @@ offset = 1;
 frequency = 915; %MHz
 lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
-    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex', 'Lib_Metadata');
+    load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex', 'Lib_Metadata'); 
 else
     [Lib_Mag, Lib_Phase, Lib_Complex] = Load_FALCON_EVB_Data_900MHz(libpath, AZ_steps, EL_steps, offset, frequency/1000);
     Lib_Metadata = struct(); Lib_Metadata.Azimuth = [AZ_start AZ_step AZ_end]; Lib_Metadata.Elevation = [EL_start EL_step EL_end]; 
@@ -92,8 +94,8 @@ for antenna_ind=1:6
         curAntennaAmp = csvData.(fieldName).magnitude;
         curAntennaPhase = csvData.(fieldName).phase;
 
-        LibMag = squeeze(Lib_Mag(antenna_ind,:, 23));
-        TestMag = squeeze(Test_Mag(antenna_ind,:, 23));
+        LibMag = squeeze(Lib_Mag(antenna_ind,:, EL_idx));
+        TestMag = squeeze(Test_Mag(antenna_ind,:, EL_idx));
 
         VNAMag = squeeze(S21_mag_data_all(antenna_ind,2,:, end));
 
@@ -131,8 +133,8 @@ for antenna_ind=1:6
                   'Tag', 'snr_footer');
 
         simphase =  unwrap(squeeze(curAntennaPhase(freq_indxs_AZ)), 180) - unwrap(squeeze(csvData.A1.phase(freq_indxs_AZ)), 180);
-        libphase = unwrap(squeeze(Lib_Phase(antenna_ind, :, 23)),180) +shifts1(antenna_ind);
-        testphase = unwrap(squeeze(Test_Phase(antenna_ind, :, 23)),180) +shifts1(antenna_ind);
+        libphase = unwrap(squeeze(Lib_Phase(antenna_ind, :, EL_idx)),180) +shifts1(antenna_ind);
+        testphase = unwrap(squeeze(Test_Phase(antenna_ind, :, EL_idx)),180) +shifts1(antenna_ind);
 
         subplot(1,2,2)
         plot(AZ_data, libphase - libphase(end));
@@ -140,7 +142,7 @@ for antenna_ind=1:6
         plot(AZ_data, testphase - testphase(end));
         plot([AZ_start:-2:AZ_end], simphase - simphase(end));
         % plot([-40:5:40], unwrap(squeeze(S21_phase_data_all(antenna_ind, 2, :, end)-S21_phase_data_all(1, 2, :, end)), 180))
-        ylim([-240 240])
+        ylim([-270 270])
         xlabel('Angle (deg)');ylabel('Phase (deg)');
         title (['Antenna ' int2str(antenna_ind) ' phase - Antenna 1 phase EL = 0']);
         legend(lib_location, test_location, 'Simulation Gain Result 915 MHz', 'VNA Data 900 MHz', 'Location', 'best');
@@ -195,9 +197,9 @@ for antenna_ind=1:6
         libphase = unwrap(squeeze(Lib_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind);
         testphase = unwrap(squeeze(Test_Phase(antenna_ind,(length(AZ_data)+1)/2, :)),180)+shifts11(antenna_ind);
         subplot(1,2,2)
-        plot(EL_data, libphase - libphase(23));
+        plot(EL_data, libphase - libphase(EL_idx));
         grid on;hold on;
-        plot(EL_data, testphase - testphase(23));
+        plot(EL_data, testphase - testphase(EL_idx));
         plot([0:2:EL_start], simphase - simphase(1));
         % plot([60:-5:0], unwrap(squeeze(S21_phase_data_all(antenna_ind, 2, 7, :)-S21_phase_data_all(1, 2, 7, :)), 180))
         xlabel('Angle (deg)');ylabel('Phase (deg)');
@@ -346,7 +348,7 @@ step_error = 10;
 
 figure(10)
 subplot(1, 2, 1)
-if EL_steps>1
+if EL_steps>1 && AZ_steps >1
     imagesc(AZ_data,EL_data,abs(AZ_err.'));
     caxis(abs(AZ_step) * [-0, step_error]);
     cb = colorbar;
@@ -354,7 +356,7 @@ if EL_steps>1
     xlabel('AZ');ylabel('EL');
 
 else
-    plot(AZ_data,AZ_err(1:AZ_step:end,1:abs(EL_step):end).');
+    plot(AZ_data,AZ_err.');
     grid on
     yl = ylim;
     yl_extended = [yl(1)-2, yl(2)+2];
@@ -372,7 +374,7 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
     'HorizontalAlignment', 'left', ...
     'FontSize', 9);
 subplot(1, 2, 2)
-if EL_steps>1
+if EL_steps>1 && AZ_steps >1
     imagesc(AZ_data,EL_data,abs(AZ_err_ITP.'));
     caxis(abs(AZ_step) * [-0, step_error]);
     cb = colorbar;
@@ -380,7 +382,7 @@ if EL_steps>1
     xlabel('AZ');ylabel('EL');
 
 else
-    plot(AZ_data,AZ_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
+    plot(AZ_data,AZ_err_ITP.');
     grid on
     ylim(yl_extended)
     xlabel('AZ');ylabel('Error (deg)');
@@ -401,14 +403,14 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 figure(11)
 subplot(1, 2, 1)
-if AZ_steps>1
+if EL_steps>1 && AZ_steps >1
     imagesc(AZ_data,EL_data,abs(EL_err.'));
     caxis(abs(EL_step) * [-0, step_error]);
     cb = colorbar;
     set(cb, 'Ticks', (step_error * 0) : abs(EL_step) : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
-    plot(EL_data,EL_err(1:AZ_step:end,1:abs(EL_step):end).');
+    plot(EL_data,EL_err.');
     grid on
     yl = ylim;
     yl_extended = [yl(1)-2, yl(2)+2];
@@ -426,14 +428,14 @@ annotation('textbox', [0.01, 0.025, 0.3, 0.05], ...
     'HorizontalAlignment', 'left', ...
     'FontSize', 9);
 subplot(1, 2, 2)
-if AZ_steps>1
+if EL_steps>1 && AZ_steps >1
     imagesc(AZ_data,EL_data,abs(EL_err_ITP.'));
     caxis(abs(EL_step) * [-0, step_error]);
     cb = colorbar;
     set(cb, 'Ticks', (step_error * 0) : abs(EL_step) : (-step_error * EL_step));
     xlabel('AZ');ylabel('EL');
 else
-    plot(EL_data,EL_err_ITP(1:AZ_step:end,1:abs(EL_step):end).');
+    plot(EL_data,EL_err_ITP.');
     grid on
     ylim(yl_extended)
     xlabel('EL');ylabel('Error (deg)');
@@ -461,17 +463,17 @@ set(gcf, 'Position', [100, 100, 1400, 700]);
 
 if EL_steps == 1
     figure(12)
-    plot(AZ_data,AZ_err(1:AZ_step:end,end).'+AZ_data,'o-');
+    plot(AZ_data,AZ_err.'+(AZ_data),'o-');
     hold on;
     plot(AZ_data,AZ_data.','o-');
-    plot(AZ_data,AZ_err_ITP(1:AZ_step:end,end).'+AZ_data,'o-');
+    plot(AZ_data,AZ_err_ITP.'+(AZ_data),'o-');
     xlabel('AZ (deg)');ylabel('AZ angle (deg)');
-    grid on; ylim([AZ_start-5 AZ_end+5]);xlim([AZ_start-5 AZ_end+5])
+    grid on; ylim([AZ_end-5 AZ_start+5]);xlim([AZ_end-5 AZ_start+5])
     legend('No Interpolation','Real Angle', 'Interpolated Angle', 'Location', 'best')
     title('Azimuth at EL = 0')
 
     figure(13)
-    plot(AZ_data,AZ_err_ITP(1:AZ_step:end,end).');
+    plot(AZ_data,AZ_err_ITP.');
     grid on
     xlabel('Azimuth')
     ylabel('Error')
@@ -500,10 +502,10 @@ elseif AZ_steps == 1
 else
     figure(12)
     subplot(1,2,1)
-    plot(AZ_data,AZ_err(:,23).'+AZ_data,'o-');
+    plot(AZ_data,AZ_err(:,EL_idx).'+AZ_data,'o-');
     hold on;
     plot(AZ_data,AZ_data.','o-');
-    plot(AZ_data,AZ_err_ITP(:,23).'+AZ_data,'o-');
+    plot(AZ_data,AZ_err_ITP(:,EL_idx).'+AZ_data,'o-');
     xlabel('AZ (deg)');ylabel('AZ angle (deg)');
     grid on; ylim([AZ_end-5 AZ_start+5]);xlim([AZ_end-5 AZ_start+5])
     legend('No Interpolation','Real Angle', 'Interpolated Angle', 'Location', 'best')
@@ -521,7 +523,7 @@ else
 
     figure(13)
     subplot(1, 2, 1)
-    plot(AZ_data,AZ_err_ITP(:,23).');
+    plot(AZ_data,AZ_err_ITP(:,EL_idx).');
     grid on
     xlabel('Azimuth')
     ylabel('Error')
@@ -577,8 +579,8 @@ end
 
 
 clear a b c d e1
-a = reshape(EL_err_ITP ,[1 121*25]);
-b = reshape(AZ_err_ITP ,[1 121*25]);
+a = reshape(EL_err_ITP ,[1 AZ_steps*EL_steps]);
+b = reshape(AZ_err_ITP ,[1 AZ_steps*EL_steps]);
 figure()
 plot(a)
 grid on
@@ -587,8 +589,8 @@ ylabel('EL Error')
 
 c = a>6;
 d = find(c == 1);
-e1 = mod(d-1, 121)+1;
-e2 = floor((d - 1) / 121) + 1;   % elevation index (increments every 121)
+e1 = mod(d-1, AZ_steps)+1;
+e2 = floor((d - 1) / AZ_steps) + 1;   % elevation index (increments every AZ_steps)
 az_ang_axis = 180:-3:-180;
 el_ang_axis = 66:-3:-6;
 
@@ -627,8 +629,8 @@ ylabel('AZ Error')
 
 c = abs(b)>50;
 d = find(c == 1);
-e1 = mod(d-1, 121)+1;
-e2 = floor((d - 1) / 121) + 1;   % elevation index (increments every 121)
+e1 = mod(d-1, AZ_steps)+1;
+e2 = floor((d - 1) / AZ_steps) + 1;   % elevation index (increments every AZ_steps)
 az_ang_axis = 180:-3:-180;
 el_ang_axis = 66:-3:-6;
 

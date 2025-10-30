@@ -3,8 +3,8 @@
 
 
 clear all;close all;clc;
-path = 'U:\Direction_Finding\20250924_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\';
-frame = 2959;
+path = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\';
+frame = 2000;
 
 num_frames = 0;
 
@@ -57,8 +57,8 @@ for i = frame:frame+num_frames
         title(['Spectrogram - Antenna ' num2str(antenna_order(ch-1))]);
         xlabel('Frame Number');
         ylabel('Frequency (GHz)');
-        colormap turbo;
         colorbar;
+        caxis([20 90]);              % Dynamic range for plotting
     end
     
     sgtitle('Spectrograms of Antennas 1–6 (RF-Aligned by Frame)');
@@ -80,7 +80,7 @@ for i = frame:frame+num_frames
         freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
         % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
     end
-    figure(2)
+    figure(2000+i)
     hold on; grid on;
     plot(a_sorted, mag2db(abs(freB(idx))));
     plot(a_sorted, mag2db(abs(freC(idx))));
@@ -91,6 +91,6 @@ for i = frame:frame+num_frames
     % yline(65, '--r', 'Threshold');
     xlabel('Frequency (GHz)')
     ylabel('Magnitude (dB)')
-    title(['FFT of file: ' num2str(frame)]);
+    title(['FFT of file: ' num2str(i)]);
     legend('Antenna 5','Antenna 4', 'Antenna 6', 'Antenna 1', 'Antenna 2', 'Antenna 3', 'Location', 'best');
 end

@@ -78,7 +78,7 @@ for i = frame:frame+num_frames_to_plot
         title(['Spectrogram - Antenna ' num2str(antenna_order(ch-1))]);
         xlabel('Frame Number');
         ylabel('Frequency (GHz)');
-        colormap turbo;
+        % colormap turbo;
         colorbar;
     end
     

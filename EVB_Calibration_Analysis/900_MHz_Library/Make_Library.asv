@@ -14,7 +14,7 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL';
+libpath = 'U:\Falcon_Project\20251024_Marana915Calibration\cal_data';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);
@@ -266,4 +266,4 @@ figure()
 plot(test')
 xlim([0 25*121])
 xlabel('File')
-ylabel('Magnitude (dB)')
+ylabel()
