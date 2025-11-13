@@ -1,7 +1,7 @@
 close all; clear all; clc;
 
 AZ_start = 180; AZ_end = -180; AZ_step = -3;
-EL_start = 66; EL_end = 0; EL_step = -3;
+EL_start = 66; EL_end = -6; EL_step = -3;
 save_figs = 1;
 lib_location = 'Calibration Library 915 MHz';
 test_location = 'Test Calibration Library 915 MHz';
@@ -15,8 +15,8 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Falcon_Project\20250625_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_CalibrationLibrary';
-testpath = 'U:\Falcon_Project\20250626_MaranaTest_AZ360_EL66_Step3_withLens_withEVB_2.456GHz_TestData_skipfirsttwo';
+libpath = 'U:\Direction_Finding\20251107_Marana_915MHz_CalibrationLibrary_360AZ_66_-6_EL_step3\data';
+testpath = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL';
 
 
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
@@ -27,7 +27,7 @@ EL_steps = length(EL_data);
 numpeaks2check = 1; %# of peaks to check in each dimension of angle interpolation
 %%%%%%%%%%%% LIBRARY %%%%%%%%%%%%%%%%%%%%%
 offset = 1;
-frequency = 2456; %MHz
+frequency = 915; %MHz
 lib_cache = fullfile(libpath, [num2str(frequency/1000) 'GHz_cached_library_data.mat']);
 if isfile(lib_cache)
     load(lib_cache, 'Lib_Mag', 'Lib_Phase', 'Lib_Complex', 'Lib_Metadata');
@@ -40,7 +40,7 @@ end
 
 %%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%
 offset = 1;
-frequency = 2456; %MHz
+frequency = 915; %MHz
 test_cache = fullfile(testpath, [num2str(frequency/1000) 'GHz_cached_test_data.mat']);
 if isfile(test_cache)
     load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex');

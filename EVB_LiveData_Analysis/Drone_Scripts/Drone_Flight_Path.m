@@ -4,13 +4,13 @@ close all; clear all; clc;
 %% ROTATOR LOCATION
 
 save_figs = 1;
-data_freq = 2.456; %Frequency of test data signal in GHz
-ref_lat = 32.27019;       % North is positive
-ref_lon = -110.925645;     % West is negative
-ref_direction = 99;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
+data_freq = 2.405; %Frequency of test data signal in GHz
+ref_lat = 32.451886;       % North is positive
+ref_lon = -111.210883;     % West is negative
+ref_direction = 130;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
 noise_level_test = 45;
 
-t_offset = -7.75;
+t_offset = 10.75;
 
 %% Load Data
 [csv, path] = uigetfile('U:\Direction_Finding\*.csv', 'Select CSV Flight Record');
@@ -26,11 +26,14 @@ load(test_cache, 'Test_Mag', 'Test_Phase', 'Test_Complex', 'num_files', 'numgood
 % antenna_time = temp.(fn{1});
 % antenna_time = posixtime(antenna_time)+t_offset;
 
-M = readmatrix([path 'log.txt']);
-antenna_time = M(:, 2) + t_offset;
+% M = readmatrix([path 'log.txt']);
+% antenna_time = M(:, 2) + t_offset;
 
 
 load([path 'AF_ITP_results.mat'])
+
+antenna_time = 0:0.955:0.955*(size(AF_ITP_results)-1);
+
 
 fullpath = fullfile(path, csv);
 T = readtable(fullpath);
@@ -68,9 +71,10 @@ angle_offset = mod(90 - ref_direction, 360); %rad2deg(atan2(data.y(1), data.x(1)
 AF_ITP_results(:, 1) = mod(AF_ITP_results(:, 1) + angle_offset +180, 360) - 180;
 dt = data.UTC_seconds - data.UTC_seconds(1);
 
-startk = 1;
-endk = length(data.x);
+startk = 220;
+endk = 680%length(data.x);
 
+antenna_time = antenna_time + data.UTC_seconds(220) + t_offset;
 
 %% Setup video writer
 videoName = fullfile(path, 'Drone_Flight_Path_XY_XZ.mp4');

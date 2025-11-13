@@ -14,7 +14,7 @@ shifts11 = [0 0 0 0 0 0];
 shifts12 = [0 0 0 0 0 0];
 
 
-libpath = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL';
+libpath = 'U:\Direction_Finding\20251107_Marana_915MHz_CalibrationLibrary_360AZ_66_-6_EL_step3\data';
 %%%%%%%%%%% FIXED PARAMETERS %%%%%%%%%%%%%
 AZ_data = AZ_start:AZ_step:AZ_end;
 AZ_steps = length(AZ_data);

@@ -3,10 +3,10 @@
 
 
 clear all;close all;clc;
-path = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\';
-frame = 2000;
+path = 'U:\Direction_Finding\20251107_Marana_915MHz_CalibrationLibrary_360AZ_66_-6_EL_step3\data\';
+frame = 3020;
 
-num_frames = 0;
+num_frames = 5;
 
 
 for i = frame:frame+num_frames

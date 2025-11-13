@@ -16,14 +16,17 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
     magnitude = NaN(6, num_files); % 6xnum_files
     phase = NaN(6, num_files);
     complex_values = NaN(6, num_files);
-    frames_passed = zeros(1, num_files);
-    fre_sample=2.94912e9/12;
+
+    fc_MHz = 900;
+    fre_sample=2.94912e9/12
+    bw_MHz = fre_sample/1e6
     fre=[0:1023]/1024*fre_sample;
-    a = fre/1e9+2.277;
+    a = fre/1e9+(fc_MHz/1e3 - bw_MHz/(2*1e3));
     n = length(fre);
+    a = a(end:-1:1);
     a = [a(n/2+1:end),a(1:n/2)];
-    a = a-data_freq;
-    [~, I] = min(abs(a));
+
+    [~, I] = min(abs(a-data_freq));
 
     for i = 1:num_files %skip first file, bad frame
         num2str(i+offset,'%04d')
@@ -75,7 +78,7 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
 
         
         passed = 0;
-        for frame_ind=1:512
+        for frame_ind=1:1024
             % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
             freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
             freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
