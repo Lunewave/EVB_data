@@ -551,7 +551,7 @@ data2 = abs(squeeze(DF(2, :, :))).';
 % Calibration Library
 nexttile
 imagesc(-180:3:180, 66:-3:39, data1);
-% caxis([cmin-5 cmax+5]);
+caxis([0 15]);
 cb1 = colorbar;
 cb1.Label.String = 'Azimuth Error [deg]';
 xlabel('AZ'); ylabel('EL'); 
@@ -599,3 +599,36 @@ title('Interpolated Elevation Error');
 
 set(gcf, 'Position', [100, 100, 1400, 700]);
 sgtitle(t, ['Angle Finding Results'])
+
+elevations = 66:-3:39;
+
+for i = 1:10
+    figure(i+30)
+    set(gcf, 'Position', [100, 100, 1500, 700]);
+
+    t = tiledlayout(1, 2, 'Padding', 'compact', 'TileSpacing', 'compact'); % Tight spacing
+
+
+    azerr = squeeze(DF(1, :, i));
+    elerr = squeeze(DF(2, :, i));
+
+
+    % Calibration Library
+    nexttile
+    plot(-180:3:180, azerr);
+    xlabel('Azimuth [deg]'); ylabel('Azimuth Error [deg]');
+    ylim([-160 160]); xlim([-180 180])
+    grid on
+    title(['Azimuth Error']);
+
+    % Calibration Library
+    nexttile
+    plot(-180:3:180, elerr);
+    xlabel('Azimuth [deg]'); ylabel('Elevation Error [deg]'); 
+    ylim([-20 20]); xlim([-180 180])
+    grid on
+    title(['Elevation Error'])
+    
+    sgtitle(['Azimuth Plane at EL = ' num2str(elevations(i))]);
+
+end

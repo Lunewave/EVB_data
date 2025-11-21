@@ -27,6 +27,7 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
     a = [a(n/2+1:end),a(1:n/2)];
 
     [~, I] = min(abs(a-data_freq));
+    I = I+1
 
     for i = 1:num_files %skip first file, bad frame
         num2str(i+offset,'%04d')
@@ -76,7 +77,6 @@ function [magnitude, phase, complex_values, num_files, frames_passed] = Load_FAL
         
         C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
 
-        
         passed = 0;
         for frame_ind=1:1024
             % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));

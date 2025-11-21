@@ -1,0 +1,341 @@
+close all; clear all; clc;
+
+
+%% ROTATOR LOCATION
+
+save_figs = 1;
+ref_lat = 32.45177;       % North is positive
+ref_lon = -111.21107;     % West is negative
+ref_direction = 138;       % 0 is north, 90 is east, 180 is south. This is the direction that the 0 degree azimuth antenna is pointing.
+N_frame = 512;
+t_offset = -270; %seconds
+roi_freq = 685:726;
+start_bin = 1;
+end_bin = 554;
+antenna_height = 2;
+
+amp = NaN(end_bin + 1 - start_bin, 6);
+
+
+%% Load Data
+[csv, path] = uigetfile('U:\Direction_Finding\*.csv', 'Select CSV Flight Record');
+
+M = readmatrix([path 'Session_Log.txt']);
+antenna_time = NaN(1, M(end, 1));
+antenna_time(M(:, 1)) = (M(:, 2) - M(1, 2))/1000 + t_offset;
+
+fullpath = fullfile(path, csv);
+T = readtable(fullpath);
+data = struct();
+for col = 1:width(T)
+    data.(T.Properties.VariableNames{col}) = T{:, col};
+end
+
+
+
+%% Process Drone Data
+
+ref_alt_feet = 1450;
+ref_alt_m = ref_alt_feet * 0.3048; % Convert to meters
+
+% Use your lat/lon and ref_lat/ref_lon and ref_alt_m
+data.z = (data.altitude_above_seaLevel_feet_  - data.altitude_above_seaLevel_feet_(1))* 0.3048;
+[data.x, data.y, ~] = geodetic2enu_custom(data.latitude, data.longitude, data.z, ref_lat, ref_lon, ref_alt_m);
+data.time = data.time_millisecond_ - data.time_millisecond_(1);
+
+
+good_idx = find(abs(data.x) < 1000);
+data.x = data.x(good_idx);
+data.y = data.y(good_idx);
+data.z = data.z(good_idx);
+data.time = data.time(good_idx) / 1000;
+
+
+drone_az = rad2deg(atan2(data.y, data.x));
+drone_el = rad2deg(atan2(data.z-antenna_height, sqrt(data.x.^2 + data.y.^2)));
+drone_r = sqrt(data.x.^2 + data.y.^2 + data.z.^2);
+
+for ifile = start_bin:end_bin
+    [a, I] = min(abs(antenna_time(ifile) - data.time));
+    if a<1 %Check to see if the drone time is close enough to the antenna time for good error.
+        drone_loc(ifile, :) = [drone_az(I) drone_el(I) drone_r(I)];
+        drone_rxy(ifile) = sqrt(data.x(I).^2 + data.y(I).^2);
+
+    else
+        drone_loc(ifile, :) = [NaN NaN NaN];
+        drone_rxy(ifile) = NaN;
+
+    end
+end
+
+%% Load .BIN files
+plot_flag = 1;
+
+for file=363%start_bin:end_bin
+    file
+    filename = fullfile(path, sprintf('%04d.bin', file));
+    if ~isfile(filename)
+        fprintf('Skipping missing file: %s\n', filename);
+        continue
+    end
+    
+    fileID = fopen(filename,'r','ieee-le');
+
+    DMA=2; % DMA = 1 for new firmware, DMA = 0 for old firmware
+    if DMA == 1
+        % Read raw IQ data
+
+        C = fread(fileID, Inf, 'int16');fclose(fileID);
+        C0 = reshape(C,[8,length(C)/8]).'; % Reshape into 8 channels
+        L_C0=length(C0);
+    
+        % Split into 8 channels (DMA ordering)
+        C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
+        C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
+        C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
+        C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
+        C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
+        C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
+        C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
+        C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:); 
+    
+        % Reconstruct complex samples
+        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+    elseif DMA == 0
+        % Alternative format
+        C = fread(fileID, Inf, 'int16');fclose(fileID);
+        C0 = reshape(C,[8,length(C)/8]).';
+        
+        % Assign channels sequentially
+        C1= C0 (1:8:end,:).'; C_all(:,1)=C1(:);
+        C2= C0 (2:8:end,:).'; C_all(:,2)=C2(:);
+        C3= C0 (3:8:end,:).'; C_all(:,3)=C3(:);
+        C4= C0 (4:8:end,:).'; C_all(:,4)=C4(:);
+        C5= C0 (5:8:end,:).'; C_all(:,5)=C5(:);
+        C6= C0 (6:8:end,:).'; C_all(:,6)=C6(:);
+        C7= C0 (7:8:end,:).'; C_all(:,7)=C7(:);
+        C8= C0 (8:8:end,:).'; C_all(:,8)=C8(:); 
+        
+        % Reconstruct complex samples
+        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+    elseif DMA == 2
+        C = fread(fileID, Inf, 'int16');fclose(fileID);
+        C0 = reshape(C,[2,length(C)/2]).';
+        L_C0=length(C0);
+        
+        C1= C0 (1:2:L_C0/4,:).'; C_all(:,1)=C1(:);
+        C2= C0 (2:2:L_C0/4,:).'; C_all(:,2)=C2(:);
+        C3= C0 (L_C0/4+1:2:L_C0/4*2,:).'; C_all(:,3)=C3(:);
+        C4= C0 (L_C0/4+2:2:L_C0/4*2,:).'; C_all(:,4)=C4(:);
+        C5= C0 (L_C0/2+1:2:L_C0/4*3,:).'; C_all(:,5)=C5(:);
+        C6= C0 (L_C0/2+2:2:L_C0/4*3,:).'; C_all(:,6)=C6(:);
+        C7= C0 (L_C0/4*3+1:2:L_C0,:).'; C_all(:,7)=C7(:);
+        C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:);
+        
+        C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
+    end
+  
+
+    % ================= FREQUENCY AXIS =================
+    fre_sample=2.94912e9;        % Original sample rate
+    fre_sample=2.94912e9/12;     % Decimated sample rate
+    fre=[0:1023]/1024*fre_sample; % Frequency vector
+
+
+    % ================= FFT PROCESSING =================
+    FFT_full=zeros(N_frame,1024,6);      % FFT results [frame, freq, RX]
+    threshold_FFT=zeros(N_frame,1024,6); % Thresholding results
+   
+    for frame_ind=1:N_frame
+        % Extract FFT per channel (mapping order based on antenna channels)
+        % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
+        freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); % channel 5
+        freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); % channel 4
+        freD=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),4)); % channel 6
+        freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5)); % channel 1
+        freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); % channel 2
+        freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); % channel 3
+        % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8));
+        
+        % Reorder into 6 RX channels
+        FFT_full(frame_ind,:,1)=fftshift(freE);
+        FFT_full(frame_ind,:,2)=fftshift(freF);
+        FFT_full(frame_ind,:,3)=fftshift(freG);
+        FFT_full(frame_ind,:,4)=fftshift(freC);
+        FFT_full(frame_ind,:,5)=fftshift(freB);
+        FFT_full(frame_ind,:,6)=fftshift(freD);      
+    end
+    
+    % ================= CFAR DETECTION =================
+    % n = length(fre);
+    % frame_peak_indices_all = cell(1, N_frame);
+    % frame_all_indices=[];
+ 
+
+    % CFAR Filtering
+    offset=1.25;
+    frame_per_freq = 20;
+    mag=abs(FFT_full);
+    noise_all0=median(mag,2);
+    noise_all=repmat(noise_all0,[1 1024 1]);
+    if file == start_bin
+        noise_level = median(mag2db(abs(squeeze(noise_all(:)))));
+    end
+    threshold_cfar = offset * noise_all;
+    threshold_FFT = mag > threshold_cfar;
+
+
+    if(plot_flag)
+    time_axis=[0:1023]*1/fre_sample*1e6;  % Time axis (us)
+    fre_axis=fre/1e9+2.277;               % Frequency axis (GHz), with LO offset
+        for rx=1:6
+            test_STFT=abs(FFT_full(:,:,rx));  % Magnitude spectrogram for RX
+
+
+                figure(98);
+                subplot(2, 3, rx);
+                imagesc(time_axis,fre_axis,mag2db(test_STFT.')); % Plot spectrogram
+                set(gca, 'YDir', 'normal');  % Flip Y axis
+                grid on;
+
+                xlabel('Time (us)');
+                ylabel('Frequency (GHz)');
+                cb = colorbar;               
+                ylabel(cb, 'Magnitude (dB)');    
+                caxis([20 90]);              % Dynamic range for plotting
+                title(sprintf('Spectrogram of RX %d', rx));
+        end
+        sgtitle(['File ' num2str(file)])
+    end
+
+    % ================= COMBINE DETECTIONS ACROSS RX =================
+    final_threshold=ones(N_frame,1024);
+    for rx=1:6
+        test_threshold=threshold_FFT(:,:,rx);
+
+        if(plot_flag)
+            figure(99);
+            subplot(2, 3, rx);
+            imagesc(time_axis,fre_axis,(test_threshold.')); % Binary detections
+            set(gca, 'YDir', 'normal');
+            grid on;
+            xlabel('Time (us)');
+            ylabel('Frequency (GHz)');
+            colormap(flipud(gray))
+            cb = colorbar;              
+            title(sprintf('Binary threshold of RX %d', rx));
+        end
+
+        final_threshold=final_threshold.*test_threshold; % Common detections
+    end
+
+    % Final binary threshold (intersection across RXs)
+    if(plot_flag)
+        figure(100)
+        imagesc(time_axis,fre_axis,(final_threshold.'));
+        set(gca, 'YDir', 'normal');
+        grid on;
+        xlabel('Time (us)');
+        ylabel('Frequency (GHz)');
+        colormap(flipud(gray))
+        cb = colorbar;              
+        title(sprintf('Final threshold'));
+    end
+
+
+    %Grab indices from final threshold and apply them to FFT_full variable
+    %as a filter
+    for rx = 1:6
+        FFT_full(:, :, rx) = FFT_full(:, :, rx) .* final_threshold;
+    end
+
+    % % Min's Filtering
+    % good_frames = 0;
+    % 
+    % for peak_idx = 1:length(roi_freq)
+    %     peak = roi_freq(peak_idx);
+    %     % Find frames where CFAR detected the peak
+    %     frames = find(final_threshold(:,peak) ==1); %summary_result(:, 3)
+    %     good_frames = good_frames + length(frames); % keep sum of good frames
+    % 
+    % end
+    % 
+    % if good_frames/length(roi_freq) > frame_per_freq
+    %     for rx = 1:6
+    %         tdata = squeeze(mag2db(abs(FFT_full_roi(:, :, rx))));
+    %         tdata = tdata(:);
+    %         tdata(tdata == -inf) = NaN;
+    %         amp(file, rx) = median(tdata, 'omitnan');
+    %     end
+    % end
+
+    % % BW Filtering
+    % Logic here is to look at only the frequency ROI
+    FFT_full_roi = FFT_full(:, roi_freq, :);
+    FFT_full_roi(FFT_full_roi == 0) = NaN;
+    fre_axis=fre/1e9+2.277;               % Frequency axis (GHz), with LO offset
+    if (plot_flag)
+        for i = 1:6
+            figure(101)
+            subplot(2, 3, i)
+            imagesc(1:512, fre_axis(roi_freq), mag2db(abs(squeeze(FFT_full_roi(:, :, i).'))));
+            xlabel('Frame')
+            ylabel('Frequency')
+            set(gca, 'YDir', 'normal');
+            grid on;
+            cb = colorbar;               
+            ylabel(cb, 'Magnitude (dB)');    
+            caxis([20 90]);              % Dynamic range for plotting
+            title(sprintf('Spectrogram of RX %d', i));
+        end
+    end
+
+    for frame = 1:512
+        for rx = 1:6
+            slice = squeeze(FFT_full_roi(frame, :, rx));
+            if std(mag2db(abs(slice)), 'omitnan') >7 %arbitrary
+                
+
+        end
+    end
+
+end
+
+
+%% Plot Results
+
+% Sort by distance
+[dist_sorted, idx] = sort(drone_loc(:, 3));
+
+amp_sorted = amp(idx, :);
+
+
+
+figure(1)
+plot(dist_sorted, amp_sorted)
+hold on
+yline(noise_level, '--r', 'Median Noise Level');
+xlabel('Distance sqrt(x^2+y^2+z^2) [m]');
+ylabel('Median Amplitude [dB]');
+title('Signal Strength vs Distance');
+legend('A1','A2','A3','A4','A5','A6','Location','best')
+grid on
+
+
+figure(2)
+plot(amp)
+hold on
+yline(noise_level, '--r', 'Median Noise Level');
+xlabel('File'); ylabel('Median Amplitude [dB]');
+title('Signal Strength vs File');
+legend('A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'Location', 'best')
+grid on
+
+
+figure(3)
+plot(dist_sorted, amp_sorted - noise_level)
+xlabel('Distance sqrt(x^2+y^2+z^2) [m]');
+ylabel('Median SNR [dB]');
+title('SNR vs Distance');
+legend('A1','A2','A3','A4','A5','A6','Location','best')
+grid on

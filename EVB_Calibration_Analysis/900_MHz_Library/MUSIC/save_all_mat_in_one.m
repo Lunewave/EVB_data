@@ -12,18 +12,21 @@ AZ_results = AF_ITP_results(:, 1);
 EL_results = AF_ITP_results(:, 2);
 
 
-AZ_err_ITP = reshape(AZ_results, [121, 25]);
-EL_err_ITP = reshape(EL_results, [121, 25]);
+AZ_err_ITP = reshape(AZ_results, [121, 10]);
+EL_err_ITP = reshape(EL_results, [121, 10]);
 
 
 for i = 1:121
-    EL_err_ITP(i, :) = EL_err_ITP(i, :) - (66:-3:-6);
+    EL_err_ITP(i, :) = EL_err_ITP(i, :) - (66:-3:39);
 end
 
-for i = 1:25
+for i = 1:10
     AZ_err_ITP(:, i) = AZ_err_ITP(:, i) - (180:-3:-180)';
 end
 
 
 AZ_err_ITP=mod(AZ_err_ITP+180,360)-180;
 EL_err_ITP=mod(EL_err_ITP+180,360)-180;
+
+DF(1, :, :) = AZ_err_ITP;
+DF(2, :, :) = EL_err_ITP;

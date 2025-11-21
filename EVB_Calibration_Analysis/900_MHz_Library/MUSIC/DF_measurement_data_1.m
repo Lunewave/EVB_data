@@ -1,6 +1,6 @@
 clear all;close all;clc;
 
-path = 'U:\Direction_Finding\20250930_MaranaCalibrationLibrary_915MHz_360AZ_66_to_-6EL\'; %keep trailing backslash
+path = 'U:\Direction_Finding\20251112_Marana_915MHz_CalibrationLibrary_360AZ_66_-6_EL_step3_incomplete\data\'; %keep trailing backslash
 % path ='.\Data\';  % Active path (local relative folder)
 bin_files = dir(fullfile(path, '*.BIN'));
 num_files = numel(bin_files);
