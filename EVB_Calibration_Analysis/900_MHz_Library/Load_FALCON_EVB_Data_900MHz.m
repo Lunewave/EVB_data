@@ -44,16 +44,16 @@ function [magnitude, phase, complex_values] = Load_FALCON_EVB_Data(path,numAZ, n
             C8= C0 (L_C0/4*3+2:2:L_C0,:).'; C_all(:,8)=C8(:);
             
             C1_cmplex=C_all(1:2:end,:)+1i*C_all(2:2:end,:);
-            
+            window_han=hann(1024);
             for frame_ind=1:1024
                 % freA=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),1));
-                freB=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
-                freC=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
-                freD=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),4)); %CH4
-                freE=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),5)); %CH5
-                freF=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
-                freG=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
-                % freH=fft(C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
+                freB=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),2)); %CH2
+                freC=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),3)); %CH3
+                freD=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),4)); %CH4
+                freE=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),5)); %CH5
+                freF=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),6)); %CH6
+                freG=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),7)); %CH7
+                % freH=fft(window_han.*C1_cmplex([1:1024]+1024*(frame_ind-1),8)); %CH8
 
 
                 % [~,I]=max(abs(freD));
